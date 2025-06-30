@@ -15,6 +15,8 @@ export default function VoiceAssistant() {
   const [isActive, setIsActive] = useState(false)
   const [showChat, setShowChat] = useState(false)
   const [connectionStatus, setConnectionStatus] = useState('disconnected')
+  const [isMuted, setIsMuted] = useState(false)
+  const [inputValue, setInputValue] = useState("")
   const scrollAreaRef = useRef(null)
 
   useEffect(() => {
@@ -28,15 +30,14 @@ export default function VoiceAssistant() {
       setConnectionStatus('connecting')
       // Get signed URL using server action
       const { signedUrl } = await getSignedUrl()
-      console.log('signedUrl', signedUrl)
       if (!signedUrl) {
-        throw new Error('Failed to get signed URL')
+        alert('Fehler: Es konnte keine Verbindung zum Agenten hergestellt werden. Bitte prüfe deine API-Konfiguration.');
+        setConnectionStatus('disconnected')
+        return
       }
       const conv = await Conversation.startSession({
-        // agentId: process.env.NEXT_PUBLIC_AGENT_ID,
         signedUrl,
         onMessage: (message) => {
-          console.log('message', message)
           setMessages((prev) => [
             ...prev,
             {
@@ -46,17 +47,15 @@ export default function VoiceAssistant() {
           ])
         },
         onError: (error) => {
-          console.error('Conversation error:', error)
+          alert('Agentenfehler: ' + error.message)
           setConnectionStatus('disconnected')
         },
         onStatusChange: (status) => {
-          console.log('Connection status:', status)
           setConnectionStatus(
             status.status === 'connected' ? 'connected' : 'disconnected'
           )
         },
         onModeChange: (mode) => {
-          console.log('mode', mode)
           setIsSpeaking(mode.mode === 'speaking')
         },
       })
@@ -79,91 +78,111 @@ export default function VoiceAssistant() {
     }
   }
 
-  return (
-    <div className='min-h-screen flex flex-col items-center justify-center bg-[#252422] p-4'>
-      <div className='w-full max-w-xs'>
-        {/* Voice Assistant Circle */}
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.5 }}
-          className='relative w-48 h-48 mx-auto mb-8 pt-2'
-        >
-          {/* Status Badge */}
-          <div className='absolute top-0 left-1/2 -translate-x-1/2 -translate-y-6'>
-            <Badge
-              variant='outline'
-              className={`
-                ${
-                  connectionStatus === 'connected'
-                    ? 'bg-green-500/20 text-green-500 border-green-500/50'
-                    : connectionStatus === 'connecting'
-                    ? 'bg-yellow-500/20 text-yellow-500 border-yellow-500/50'
-                    : 'bg-red-500/20 text-red-500 border-red-500/50'
-                }
-                font-medium capitalize
-              `}
-            >
-              {connectionStatus}
-            </Badge>
-          </div>
+  // Mute/unmute microphone without ending conversation
+  const handleMuteToggle = () => {
+    setIsMuted((prev) => !prev)
+    if (conversation && conversation.setMuted) {
+      conversation.setMuted(!isMuted)
+    }
+  }
 
-          {/* Base Circle */}
-          <div className='relative w-full h-full'>
-            <div
-              className={`absolute inset-0 rounded-full transition-colors duration-300 ${
-                isActive ? 'bg-[#eb5e28]' : 'bg-[#403d39]'
-              }`}
-            />
-            <div className='absolute inset-[10%] rounded-full bg-[#252422]' />
-            {/* Pulse Effects */}
+  // Text abschicken (an Agenten senden) – ElevenLabs SDK-konform, ohne Status-Check und Fehlerausgabe
+  const handleSend = async () => {
+    const text = inputValue.trim();
+    if (!text || !conversation) return;
+    setMessages((prev) => [
+      ...prev,
+      { source: "user", message: text },
+    ]);
+    setInputValue("");
+    try {
+      if (typeof conversation.input === 'function') {
+        if (connectionStatus !== 'connected') {
+          // Agent nicht verbunden, Textinput wird ignoriert!
+          return;
+        }
+        await conversation.input({ text });
+      } else {
+        // conversation.input ist keine Funktion! Conversation: conversation
+      }
+    } catch (err) {
+      // Fehler beim Senden an ElevenLabs SDK: err
+    }
+  };
+
+  return (
+    <div className='min-h-screen flex flex-col items-center justify-center bg-white p-4'>
+      <div className='w-full max-w-sm mx-auto flex flex-col items-center'>
+        {/* Firmenlogo oben auf der Seite - größer, weniger Abstand nach unten */}
+        <div className="w-full flex justify-center mb-4">
+          <img
+            src="/public-pics/moelders-logo.png"
+            alt="Mölders Firmenlogo"
+            className="h-32 object-contain"
+            style={{ maxWidth: 600 }}
+          />
+        </div>
+
+        {/* Voice Assistant Circle */}
+        <div className='relative flex flex-col items-center mb-8'>
+          {/* Pulsierende Ringe: subtil, nach rechts oben versetzt */}
+          <div className="absolute top-1/2 left-1/2 pointer-events-none z-0">
             {isSpeaking && (
-              <div className='absolute inset-[15%]'>
-                <div className='absolute inset-0 rounded-full bg-[#eb5e28] opacity-20 animate-pulse-fast' />
-                <div className='absolute inset-0 rounded-full bg-[#eb5e28] opacity-15 animate-pulse-medium' />
-                <div className='absolute inset-0 rounded-full bg-[#eb5e28] opacity-10 animate-pulse-slow' />
+              <>
+                <div className="w-44 h-44 rounded-full bg-[#dd232d] opacity-20 animate-ping-slow absolute" style={{ top: '-20%', left: '20%' }} />
+                <div className="w-56 h-56 rounded-full bg-[#dd232d] opacity-10 animate-ping-slow absolute" style={{ top: '-30%', left: '30%', animationDelay: '1.2s' }} />
+              </>
+            )}
+          </div>
+          <div className='w-40 h-40 rounded-full border-8 border-[#dd232d] bg-gray-100 flex items-center justify-center shadow-md overflow-hidden relative z-10'>
+            <img
+              src='/public-pics/anna.jpg'
+              alt='Anna, Azubiberaterin'
+              className='w-full h-full object-cover rounded-full'
+            />
+          </div>
+          {/* Start/End Conversation Button klar darunter */}
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={isActive ? endConversation : startConversation}
+            className={`mt-4 mb-2 px-6 py-2 rounded-full text-base font-semibold shadow-md transition-all duration-200 focus:outline-none
+              ${isActive ? 'bg-gray-200 text-[#dd232d] hover:bg-gray-300' : 'bg-[#dd232d] text-white hover:bg-[#b81c24]'}
+            `}
+            aria-label={isActive ? 'Gespräch beenden' : 'Gespräch starten'}
+          >
+            {isActive ? 'Gespräch beenden' : 'Gespräch starten'}
+          </motion.button>
+          {/* Moderner Status-Badge unter dem Button */}
+          <div className='mt-3'>
+            {connectionStatus === 'connected' && (
+              <div className="inline-flex items-center bg-green-100 text-green-700 text-sm px-3 py-1 rounded-full">
+                <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>Verbunden
+              </div>
+            )}
+            {connectionStatus === 'connecting' && (
+              <div className="inline-flex items-center bg-yellow-100 text-yellow-700 text-sm px-3 py-1 rounded-full">
+                <span className="w-2 h-2 bg-yellow-500 rounded-full mr-2 animate-pulse"></span>Verbinde…
+              </div>
+            )}
+            {connectionStatus === 'disconnected' && (
+              <div className="inline-flex items-center bg-red-100 text-red-700 text-sm px-3 py-1 rounded-full">
+                <span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>Nicht verbunden
               </div>
             )}
           </div>
-        </motion.div>
-
-        {/* Control Buttons */}
-        <div className='space-y-4'>
-          {/* Microphone button */}
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={isActive ? endConversation : startConversation}
-            className={`h-12 px-4 rounded-full flex items-center justify-center mx-auto ${
-              isActive
-                ? 'bg-[#eb5e28] text-[#fffcf2]'
-                : 'bg-[#ccc5b9] text-[#252422]'
-            }`}
-          >
-            {isActive ? (
-              <>
-                <span className='mr-2'>End</span>
-                <MicOff className='w-6 h-6' />
-              </>
-            ) : (
-              <>
-                <Mic className='w-6 h-6' />
-                <span className='ml-2'>Start</span>
-              </>
-            )}
-          </motion.button>
-
-          {/* Show/Hide chat button */}
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setShowChat(!showChat)}
-            className='px-4 py-2 rounded-full bg-[#ccc5b9] text-[#252422] text-sm font-semibold flex items-center justify-center space-x-2 mx-auto'
-          >
-            <MessageCircle className='w-4 h-4' />
-            <span>{showChat ? 'Hide Chat' : 'Show Chat'}</span>
-          </motion.button>
         </div>
+
+        {/* Show/Hide chat button */}
+        <motion.button
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
+          onClick={() => setShowChat(!showChat)}
+          className='mb-4 px-6 py-2 rounded-full bg-gray-100 text-[#252422] text-base font-medium flex items-center justify-center space-x-2 shadow-sm border border-gray-200 hover:bg-gray-200 transition-colors'
+        >
+          <MessageCircle className='w-5 h-5' />
+          <span>{showChat ? 'Chat verbergen' : 'Zeige Chat'}</span>
+        </motion.button>
 
         {/* Chat area */}
         <AnimatePresence>
@@ -173,47 +192,62 @@ export default function VoiceAssistant() {
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.3 }}
-              className='mt-4 bg-[#403d39] rounded-xl overflow-hidden'
+              className='w-full bg-white rounded-3xl overflow-hidden shadow-xl mb-2 mt-6 border border-[#eee]'
+              style={{ boxShadow: '0 4px 32px 0 rgba(34,34,34,0.10)', backdropFilter: 'blur(0.5px)' }}
             >
-              <div className='flex justify-end p-2'>
-                <button
-                  onClick={() => downloadTranscript(messages)}
-                  className='text-[#ccc5b9] hover:text-[#eb5e28] transition-colors'
-                >
-                  <Download className='w-5 h-5' />
-                </button>
+              {/* Header mit Avatar und Status */}
+              <div className='flex items-center gap-3 px-6 pt-6 pb-2'>
+                <img
+                  src='/public-pics/anna.jpg'
+                  alt='Anna, Azubiberaterin'
+                  className='w-10 h-10 rounded-full border-2 border-[#dd232d] object-cover shadow'
+                />
+                <span className='bg-gray-100 text-gray-500 text-base rounded-full px-4 py-1 font-medium'>Ich höre Dir zu...</span>
               </div>
+              {/* Chatverlauf */}
               <div
                 ref={scrollAreaRef}
-                className='h-64 overflow-y-auto p-4 space-y-2 scrollbar-thin scrollbar-thumb-[#ccc5b9] scrollbar-track-[#252422]'
+                className='h-80 overflow-y-auto px-6 py-4 space-y-4 scrollbar-thin scrollbar-thumb-[#eee] scrollbar-track-[#fafafa]'
               >
                 {messages.map((message, index) => (
                   <div
                     key={index}
-                    className={`flex items-start space-x-2 ${
+                    className={`flex ${
                       message.source === 'user'
-                        ? 'flex-row-reverse'
-                        : 'flex-row'
-                    }`}
+                        ? 'justify-end'
+                        : 'justify-start'
+                    } items-end w-full`}
                   >
-                    <div className='flex-shrink-0'>
-                      {message.source === 'user' ? (
-                        <User className='w-6 h-6 text-[#eb5e28]' />
-                      ) : (
-                        <Bot className='w-6 h-6 text-[#ccc5b9]' />
-                      )}
-                    </div>
+                    {message.source !== 'user' && (
+                      <img
+                        src='/public-pics/anna.jpg'
+                        alt='Anna, Azubiberaterin'
+                        className='w-8 h-8 rounded-full border border-[#dd232d] object-cover mr-2'
+                      />
+                    )}
                     <div
-                      className={`p-3 rounded-lg max-w-[80%] ${
+                      className={`rounded-2xl px-5 py-3 text-base font-normal max-w-[80%] shadow-sm border transition-all ${
                         message.source === 'user'
-                          ? 'bg-[#eb5e28] text-[#fffcf2]'
-                          : 'bg-[#ccc5b9] text-[#252422]'
+                          ? 'bg-[#dd232d] text-white border-[#dd232d] text-right rounded-br-3xl rounded-tl-3xl rounded-bl-3xl'
+                          : 'bg-gray-100 text-[#252422] border-gray-200 text-left rounded-bl-3xl rounded-tr-3xl rounded-tl-3xl'
                       }`}
                     >
-                      <p className='text-sm'>{message.message}</p>
+                      {message.message}
                     </div>
                   </div>
                 ))}
+              </div>
+              {/* Inputbereich entfernt, Download Button hinzugefügt */}
+              <div className='flex items-center justify-end gap-2 px-4 pb-3 pt-1 border-t border-[#eee] bg-white'>
+                <button
+                  className='p-1.5 rounded-lg border border-[#dd232d] text-[#dd232d] hover:bg-[#dd232d] hover:text-white transition-colors flex items-center gap-1'
+                  onClick={() => downloadTranscript(messages)}
+                  aria-label='Chat herunterladen'
+                  type='button'
+                >
+                  <Download className='w-4 h-4' />
+                  <span className='text-sm font-medium'>Download</span>
+                </button>
               </div>
             </motion.div>
           )}

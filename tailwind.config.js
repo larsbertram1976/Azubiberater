@@ -13,7 +13,7 @@ module.exports = {
         timberwolf: '#ccc5b9',
         olive: '#403d39',
         eerie: '#252422',
-        flame: '#eb5e28',
+        flame: '#dd232d',
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
         card: {
