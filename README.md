@@ -1,10 +1,6 @@
-# ElevenLabs Conversational AI Agents
+# Mölders Azubi Berater
 
-This is a [Next.js](https://nextjs.org/) project that implements a conversational AI Agents using ElevenLabs' SDK. The application features a voice assistant interface that allows users to interact with the AI through voice commands.
-
-[ElevenLabs conversational-ai-sdks Document](https://elevenlabs.io/docs/conversational-ai-sdks/javascript/client-sdk)
-
-
+Dies ist ein moderner Sprachassistent für die Azubi-Beratung bei Mölders. Die App bietet eine intuitive Voice- und Chat-Interaktion im Mölders-Branding.
 
 ## Prerequisites
 

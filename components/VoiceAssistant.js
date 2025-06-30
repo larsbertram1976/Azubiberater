@@ -113,8 +113,8 @@ export default function VoiceAssistant() {
   return (
     <div className='min-h-screen flex flex-col items-center justify-center bg-white p-4'>
       <div className='w-full max-w-sm mx-auto flex flex-col items-center'>
-        {/* Firmenlogo oben auf der Seite - größer, weniger Abstand nach unten */}
-        <div className="w-full flex justify-center mb-4">
+        {/* Firmenlogo oben auf der Seite - noch weiter nach oben */}
+        <div className="w-full flex justify-center mb-2 mt-0">
           <img
             src="/public-pics/moelders-logo.png"
             alt="Mölders Firmenlogo"
@@ -153,24 +153,6 @@ export default function VoiceAssistant() {
           >
             {isActive ? 'Gespräch beenden' : 'Gespräch starten'}
           </motion.button>
-          {/* Moderner Status-Badge unter dem Button */}
-          <div className='mt-3'>
-            {connectionStatus === 'connected' && (
-              <div className="inline-flex items-center bg-green-100 text-green-700 text-sm px-3 py-1 rounded-full">
-                <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>Verbunden
-              </div>
-            )}
-            {connectionStatus === 'connecting' && (
-              <div className="inline-flex items-center bg-yellow-100 text-yellow-700 text-sm px-3 py-1 rounded-full">
-                <span className="w-2 h-2 bg-yellow-500 rounded-full mr-2 animate-pulse"></span>Verbinde…
-              </div>
-            )}
-            {connectionStatus === 'disconnected' && (
-              <div className="inline-flex items-center bg-red-100 text-red-700 text-sm px-3 py-1 rounded-full">
-                <span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>Nicht verbunden
-              </div>
-            )}
-          </div>
         </div>
 
         {/* Show/Hide chat button */}
@@ -249,9 +231,48 @@ export default function VoiceAssistant() {
                   <span className='text-sm font-medium'>Download</span>
                 </button>
               </div>
+              {/* Status-Badge jetzt am Ende des Chatfensters */}
+              <div className='flex justify-center mt-4 mb-2'>
+                {connectionStatus === 'connected' && (
+                  <div className="inline-flex items-center bg-green-100 text-green-700 text-sm px-3 py-1 rounded-full">
+                    <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>Verbunden
+                  </div>
+                )}
+                {connectionStatus === 'connecting' && (
+                  <div className="inline-flex items-center bg-yellow-100 text-yellow-700 text-sm px-3 py-1 rounded-full">
+                    <span className="w-2 h-2 bg-yellow-500 rounded-full mr-2 animate-pulse"></span>Verbinde…
+                  </div>
+                )}
+                {connectionStatus === 'disconnected' && (
+                  <div className="inline-flex items-center bg-red-100 text-red-700 text-sm px-3 py-1 rounded-full">
+                    <span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>Nicht verbunden
+                  </div>
+                )}
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Status-Badge am Seitenende, wenn Chat zu */}
+        {!showChat && (
+          <div className='flex justify-center mt-4 mb-2'>
+            {connectionStatus === 'connected' && (
+              <div className="inline-flex items-center bg-green-100 text-green-700 text-sm px-3 py-1 rounded-full">
+                <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>Verbunden
+              </div>
+            )}
+            {connectionStatus === 'connecting' && (
+              <div className="inline-flex items-center bg-yellow-100 text-yellow-700 text-sm px-3 py-1 rounded-full">
+                <span className="w-2 h-2 bg-yellow-500 rounded-full mr-2 animate-pulse"></span>Verbinde…
+              </div>
+            )}
+            {connectionStatus === 'disconnected' && (
+              <div className="inline-flex items-center bg-red-100 text-red-700 text-sm px-3 py-1 rounded-full">
+                <span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>Nicht verbunden
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )

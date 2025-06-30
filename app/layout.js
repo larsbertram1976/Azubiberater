@@ -4,13 +4,16 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  title: 'ElevenLabs Conversation App',
-  description: 'A futuristic conversation app using ElevenLabs AI',
+  title: 'Mölders Azubi Berater',
+  description: 'Sprachassistent für Azubi-Beratung bei Mölders',
 }
 
 export default function RootLayout({ children }) {
   return (
     <html lang='en'>
+      <head>
+        <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+      </head>
       <body className={inter.className}>{children}</body>
     </html>
   )
