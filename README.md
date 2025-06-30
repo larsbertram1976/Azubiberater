@@ -4,18 +4,7 @@ This is a [Next.js](https://nextjs.org/) project that implements a conversationa
 
 [ElevenLabs conversational-ai-sdks Document](https://elevenlabs.io/docs/conversational-ai-sdks/javascript/client-sdk)
 
-## Support Me
 
-If you enjoy this project and want to support me, consider buying me a coffee or visiting my personal website to join the membership!
-
-<div style="display: flex; gap: 10px; margin-top: 10px;">
-  <a href="https://buymeacoffee.com/aiforsuccess">
-    <img src="https://img.shields.io/badge/Buy_Me_a_Coffee-FFDD57?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black" alt="Buy Me a Coffee">
-  </a>
-  <a href="https://ashutoshai.com/">
-    <img src="https://img.shields.io/badge/Visit_My_Website-4A90E2?style=for-the-badge&logo=internet-explorer&logoColor=white" alt="Visit My Website">
-  </a>
-</div>
 
 ## Prerequisites
 
@@ -76,4 +65,4 @@ To get started with the project, follow these steps:
 
 ## License
 
-This project is licensed under the MIT License. For more details, please refer to the [LICENSE](LICENSE) file, which outlines the terms and conditions of this license.
+This project is licensed under the becoss.de License. For more details, please refer to the file, which outlines the terms and conditions of this license.
