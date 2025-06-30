@@ -114,7 +114,7 @@ export default function VoiceAssistant() {
     <div className='min-h-screen flex flex-col items-center justify-center bg-white p-4'>
       <div className='w-full max-w-sm mx-auto flex flex-col items-center'>
         {/* Firmenlogo oben auf der Seite - noch weiter nach oben */}
-        <div className="w-full flex justify-center mb-2 mt-0">
+        <div className="w-full flex justify-center mb-2" style={{ marginTop: '-18px' }}>
           <img
             src="/public-pics/moelders-logo.png"
             alt="Mölders Firmenlogo"
