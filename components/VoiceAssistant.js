@@ -86,7 +86,7 @@ export default function VoiceAssistant() {
     }
   }
 
-  // Text abschicken (an Agenten senden) – ElevenLabs SDK-konform, ohne Status-Check und Fehlerausgabe
+  // Text abschicken (an Agenten senden) – SDK-konform, ohne Status-Check und Fehlerausgabe
   const handleSend = async () => {
     const text = inputValue.trim();
     if (!text || !conversation) return;
@@ -106,7 +106,7 @@ export default function VoiceAssistant() {
         // conversation.input ist keine Funktion! Conversation: conversation
       }
     } catch (err) {
-      // Fehler beim Senden an ElevenLabs SDK: err
+      // Fehler beim Senden an das SDK: err
     }
   };
 

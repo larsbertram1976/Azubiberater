@@ -4,7 +4,7 @@ Dies ist ein moderner Sprachassistent für die Azubi-Beratung bei Mölders. Die 
 
 ## Prerequisites
 
-1. Visit [ElevenLabs Conversational AI](https://elevenlabs.io/app/conversational-ai) to create your agents.
+1. Create your agents.
 2. Copy the Agent ID that needs to be configured.
 3. Note this code uses signed URL so make sure you enable authentication for your agents.
 
@@ -23,7 +23,6 @@ To get started with the project, follow these steps:
 
    ```bash
    git clone <repository-url>
-   cd elevenlabs-conversational-ai-agents
    ```
 
 2. Install the dependencies:
