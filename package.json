@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@11labs/client": "^0.1.4",
     "@radix-ui/react-scroll-area": "^1.2.0",
     "@radix-ui/react-slider": "^1.2.1",
     "@radix-ui/react-slot": "^1.1.0",
@@ -22,7 +23,8 @@
     "react-toastify": "^10.0.6",
     "tailwind-merge": "^2.5.4",
     "tailwind-scrollbar": "^3.1.0",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "util-deprecate": "^1.0.2"
   },
   "devDependencies": {
     "postcss": "^8",
