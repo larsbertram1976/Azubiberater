@@ -401,9 +401,9 @@ export default function VoiceAssistant() {
             {isActive ? 'Gespräch beenden' : `Gespräch mit ${selectedAgent === 'anna' ? 'Anna' : 'Joshua'} starten`}
           </motion.button>
         </div>
-        {/* Datenschutz-Checkbox kompakt und direkt unter dem Button, Abstand nach unten vergrößert */}
-        <div className="flex w-full justify-center" style={{ marginTop: '-14px', marginBottom: '18px' }}>
-          <div className="flex items-center w-full max-w-[320px] mx-auto">
+        {/* Datenschutz-Checkbox kompakt und direkt unter dem Button, Abstand nach oben und unten optimiert */}
+        <div className="w-full flex justify-center items-center" style={{ marginTop: '-2px', marginBottom: '22px' }}>
+          <div className="flex items-center justify-center w-full max-w-[320px] mx-auto">
             <input
               id="privacy-check"
               type="checkbox"
@@ -534,7 +534,7 @@ export default function VoiceAssistant() {
                     </div>
                   </div>
                 ))}
-                {/* Ladeindikator für Agenten-Nachricht, wenn Anna spricht aber noch keine neue Nachricht */}
+                {/* Ladeindikator für Agenten-Nachricht, neutral (drei Punkte) */}
                 {pendingAgentMessage && (
                   <div className="flex justify-start items-end w-full">
                     <img
@@ -543,8 +543,11 @@ export default function VoiceAssistant() {
                       className='w-7 h-7 rounded-full border border-[#dd232d] object-cover mr-2'
                     />
                     <div className='bg-gradient-to-br from-gray-100 to-gray-200 text-[#252422] border border-gray-200 text-left px-5 py-2 max-w-[75%] shadow-lg relative agent-bubble flex items-center gap-2' style={{ fontSize: 13, lineHeight: 1.45, minWidth: 60, borderRadius: '18px 18px 18px 4px' }}>
-                      <span className="animate-pulse">Anna schreibt...</span>
-                      <span className="ml-1 w-2 h-2 rounded-full bg-[#dd232d] animate-pulse"></span>
+                      <span className="flex flex-row gap-1 items-center" aria-label="Agent tippt">
+                        <span className={`w-2 h-2 rounded-full animate-bounce`} style={{backgroundColor: selectedAgent === 'anna' ? '#dd232d' : '#028e4a', animationDelay:'0s'}}></span>
+                        <span className={`w-2 h-2 rounded-full animate-bounce`} style={{backgroundColor: selectedAgent === 'anna' ? '#dd232d' : '#028e4a', animationDelay:'0.18s'}}></span>
+                        <span className={`w-2 h-2 rounded-full animate-bounce`} style={{backgroundColor: selectedAgent === 'anna' ? '#dd232d' : '#028e4a', animationDelay:'0.36s'}}></span>
+                      </span>
                       <span style={{ position: 'absolute', left: -8, bottom: 0, width: 0, height: 0, borderTop: '10px solid transparent', borderBottom: '10px solid transparent', borderRight: '12px solid #e5e7eb' }} />
                     </div>
                   </div>
