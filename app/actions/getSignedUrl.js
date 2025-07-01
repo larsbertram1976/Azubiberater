@@ -1,10 +1,10 @@
 // app/actions/getSignedUrl.js
 'use server'
 
-export async function getSignedUrl() {
+export async function getSignedUrl(agentId) {
   try {
     const response = await fetch(
-      `https://api.elevenlabs.io/v1/convai/conversation/get_signed_url?agent_id=${process.env.NEXT_PUBLIC_AGENT_ID}`,
+      `https://api.elevenlabs.io/v1/convai/conversation/get_signed_url?agent_id=${agentId}`,
       {
         method: 'GET',
         headers: {

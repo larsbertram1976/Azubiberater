@@ -10,6 +10,9 @@
   },
   "dependencies": {
     "@11labs/client": "^0.1.4",
+    "@elevenlabs/client": "^0.1.7",
+    "@elevenlabs/elevenlabs-js": "^2.4.1",
+    "@elevenlabs/react": "^0.1.7",
     "@radix-ui/react-scroll-area": "^1.2.0",
     "@radix-ui/react-slider": "^1.2.1",
     "@radix-ui/react-slot": "^1.1.0",
