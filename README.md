@@ -1,6 +1,6 @@
 # Mölders Azubi Berater
 
-Dies ist ein moderner Sprachassistent und  für die Azubi-Beratung bei Mölders. Die App bietet eine intuitive Voice- und Chat-Interaktion im Mölders-Branding. weitere Entwicklungen kommen.
+Dies ist ein moderner Sprachassistent und Berater für die Azubi-Beratung bei Mölders. Die App bietet eine intuitive Voice- und Chat-Interaktion im Mölders-Branding. weitere Entwicklungen kommen.
 
 ## Prerequisites
 
