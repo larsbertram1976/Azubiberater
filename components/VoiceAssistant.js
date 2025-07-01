@@ -403,7 +403,7 @@ export default function VoiceAssistant() {
         </div>
         {/* Datenschutz-Checkbox kompakt und direkt unter dem Button, Abstand nach unten vergrößert */}
         <div className="flex w-full justify-center" style={{ marginTop: '-14px', marginBottom: '18px' }}>
-          <div className="flex items-center">
+          <div className="flex items-center w-full max-w-[320px] mx-auto" style={{touchAction:'manipulation'}}>
             <input
               id="privacy-check"
               type="checkbox"
@@ -415,11 +415,12 @@ export default function VoiceAssistant() {
                   setPrivacyChecked(e.target.checked)
                 }
               }}
-              className="mr-1 accent-[#dd232d]"
-              style={{ width: '14px', height: '14px' }}
+              className="mr-1 accent-[#dd232d] cursor-pointer"
+              style={{ width: '14px', height: '14px', minWidth: '14px', minHeight: '14px', touchAction: 'manipulation' }}
               disabled={isActive}
+              tabIndex={0}
             />
-            <label htmlFor="privacy-check" className="text-[11px] text-gray-700 select-none cursor-pointer" style={{lineHeight:1.1}}>
+            <label htmlFor="privacy-check" className="text-[11px] text-gray-700 select-none cursor-pointer" style={{lineHeight:1.1, userSelect:'none', WebkitTapHighlightColor:'transparent'}}>
               Ich akzeptiere die <span className="underline text-[#dd232d] cursor-pointer" onClick={e => {e.preventDefault(); window.open('https://www.moelders.de/datenschutz', '_blank', 'noopener,noreferrer')}}>Datenschutzrichtlinie</span>
             </label>
           </div>
