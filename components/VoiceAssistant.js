@@ -409,10 +409,9 @@ export default function VoiceAssistant() {
               type="checkbox"
               checked={privacyChecked}
               onChange={e => {
+                setPrivacyChecked(e.target.checked);
                 if (!privacyAccepted) {
-                  setShowPrivacyModal(true)
-                } else {
-                  setPrivacyChecked(e.target.checked)
+                  setShowPrivacyModal(true);
                 }
               }}
               className="mr-1 accent-[#dd232d] cursor-pointer"
