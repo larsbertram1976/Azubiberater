@@ -32,6 +32,7 @@ export default function VoiceAssistant() {
   const [privacyAccepted, setPrivacyAccepted] = useState(false)
   const [pendingAgentMessage, setPendingAgentMessage] = useState(false)
   const [selectedAgent, setSelectedAgent] = useState('anna') // 'anna' oder 'joshua'
+  const [currentSpeaker, setCurrentSpeaker] = useState(selectedAgent) // Track who is currently speaking
   const scrollAreaRef = useRef(null)
   const recognitionRef = useRef(null)
 
@@ -93,11 +94,15 @@ export default function VoiceAssistant() {
     }
   }, [isActive])
 
-  // Initialisiere Conversation
+  // Update currentSpeaker when selectedAgent changes (e.g. on new conversation start)
+  useEffect(() => {
+    setCurrentSpeaker(selectedAgent)
+  }, [selectedAgent])
+
+  // --- Conversation logic with robust handover and speaker tracking ---
   const startConversation = async () => {
     try {
       setConnectionStatus('connecting')
-      // Agenten-ID je nach Auswahl
       const agentId = AGENT_IDS[selectedAgent] || AGENT_IDS.anna
       const { signedUrl } = await getSignedUrl(agentId)
       if (!signedUrl) {
@@ -115,6 +120,17 @@ export default function VoiceAssistant() {
               message: message.message,
             },
           ])
+          // Dynamisch den Sprecher setzen, wenn Agent antwortet
+          if (message.source !== 'user') {
+            // Try to detect handover by message meta (if available)
+            if (message.agent) {
+              // If SDK provides agent info, use it
+              setCurrentSpeaker(message.agent === AGENT_IDS.anna ? 'anna' : 'joshua')
+            } else {
+              // Fallback: use selectedAgent
+              setCurrentSpeaker(selectedAgent)
+            }
+          }
           if (message.source !== 'user') setPendingAgentMessage(false)
         },
         onError: (error) => {
@@ -129,12 +145,20 @@ export default function VoiceAssistant() {
         onModeChange: (mode) => {
           setIsSpeaking(mode.mode === 'speaking')
           if (mode.mode === 'speaking') setPendingAgentMessage(true)
+          // Try to detect handover by mode.agent (if available)
+          if (mode.agent) {
+            setCurrentSpeaker(mode.agent === AGENT_IDS.anna ? 'anna' : 'joshua')
+          }
+        },
+        onAgentHandover: (newAgentId) => {
+          // If SDK supports explicit handover callback
+          setCurrentSpeaker(newAgentId === AGENT_IDS.anna ? 'anna' : 'joshua')
         },
       })
       setConversation(conv)
       setIsActive(true)
       setConnectionStatus('connected')
-      // Recognition erzeugen und ggf. starten
+      setCurrentSpeaker(selectedAgent)
       if (!recognitionRef.current) createRecognition()
       startMic()
     } catch (error) {
@@ -200,6 +224,27 @@ export default function VoiceAssistant() {
       return () => clearTimeout(t)
     }
   }, [showAgentSwitchHint])
+
+  // --- Handover logic: allow agent switch during conversation ---
+  const handoverToAgent = async (targetAgent) => {
+    if (!conversation || !isActive) return
+    if (selectedAgent === targetAgent) return
+    // Try to use SDK handover if available
+    if (typeof conversation.handover === 'function') {
+      try {
+        await conversation.handover({ agentId: AGENT_IDS[targetAgent] })
+        setSelectedAgent(targetAgent)
+        // (Revert: do not setCurrentSpeaker here)
+      } catch (err) {
+        alert('Handover fehlgeschlagen: ' + (err?.message || err))
+      }
+    } else {
+      // Fallback: End and restart conversation (not ideal)
+      await endConversation()
+      setSelectedAgent(targetAgent)
+      setTimeout(() => startConversation(), 400)
+    }
+  }
 
   return (
     <div className='min-h-screen flex flex-col items-center justify-center bg-white p-4'>
@@ -292,7 +337,7 @@ export default function VoiceAssistant() {
           <div className="flex flex-row items-center justify-center gap-8 relative">
             {/* Anna */}
             <div className="relative flex flex-col items-center justify-center" style={{minWidth: '8rem', minHeight: '8rem'}}>
-              {selectedAgent === 'anna' && isSpeaking && (
+              {currentSpeaker === 'anna' && isSpeaking && (
                 <>
                   <span className="absolute inset-0 flex items-center justify-center z-0 pointer-events-none">
                     <span className="block w-52 h-52 rounded-full bg-gradient-to-tr from-[#dd232d] via-[#ff6f61] to-[#dd232d] opacity-20 animate-pulse-spin-slow blur-[4px]" style={{position:'absolute'}}></span>
@@ -312,7 +357,8 @@ export default function VoiceAssistant() {
               <button
                 onClick={() => {
                   if (isActive) {
-                    setShowAgentSwitchHint('anna')
+                    if (selectedAgent !== 'anna') handoverToAgent('anna')
+                    else setShowAgentSwitchHint('anna')
                   } else {
                     setSelectedAgent('anna')
                   }
@@ -339,7 +385,7 @@ export default function VoiceAssistant() {
             </div>
             {/* Joshua */}
             <div className="relative flex flex-col items-center justify-center" style={{minWidth: '8rem', minHeight: '8rem'}}>
-              {selectedAgent === 'joshua' && isSpeaking && (
+              {currentSpeaker === 'joshua' && isSpeaking && (
                 <>
                   <span className="absolute inset-0 flex items-center justify-center z-0 pointer-events-none">
                     <span className="block w-52 h-52 rounded-full bg-gradient-to-tl from-[#028e4a] via-[#4be585] to-[#028e4a] opacity-20 animate-pulse-spin-rev blur-[4px]" style={{position:'absolute'}}></span>
@@ -359,7 +405,8 @@ export default function VoiceAssistant() {
               <button
                 onClick={() => {
                   if (isActive) {
-                    setShowAgentSwitchHint('joshua')
+                    if (selectedAgent !== 'joshua') handoverToAgent('joshua')
+                    else setShowAgentSwitchHint('joshua')
                   } else {
                     setSelectedAgent('joshua')
                   }
@@ -405,7 +452,7 @@ export default function VoiceAssistant() {
                 <span className="w-full text-center block" style={{marginRight: '40px'}}>
                   {isActive ? 'Gespräch beenden' : `Gespräch mit ${selectedAgent === 'anna' ? 'Anna' : 'Joshua'} starten`}
                 </span>
-                {/* Status-Kreis bündig am rechten Rand, IM Button, nicht absolut! */}
+                {/* Status-Kreis bündig am rechten Rand, IM BUTTON, NICHT ABSOLUT! */}
                 <span
                   className="flex items-center justify-center ml-auto"
                   aria-label={connectionStatus === 'connected' ? 'Verbunden' : 'Nicht verbunden'}
@@ -539,8 +586,8 @@ export default function VoiceAssistant() {
                     >
                       {message.source !== 'user' && (
                         <img
-                          src={selectedAgent === 'anna' ? '/public-pics/anna.jpg' : '/public-pics/joshua.jpg'}
-                          alt={selectedAgent === 'anna' ? 'Anna, Azubiberaterin' : 'Joshua, Azubiberater'}
+                          src={currentSpeaker === 'anna' ? '/public-pics/anna.jpg' : '/public-pics/joshua.jpg'}
+                          alt={currentSpeaker === 'anna' ? 'Anna, Azubiberaterin' : 'Joshua, Azubiberater'}
                           className='w-7 h-7 rounded-full border border-[#dd232d] object-cover mr-2'
                         />
                       )}
@@ -566,15 +613,15 @@ export default function VoiceAssistant() {
                   {pendingAgentMessage && (
                     <div className="flex justify-start items-end w-full">
                       <img
-                        src={selectedAgent === 'anna' ? '/public-pics/anna.jpg' : '/public-pics/joshua.jpg'}
-                        alt={selectedAgent === 'anna' ? 'Anna, Azubiberaterin' : 'Joshua, Azubiberater'}
+                        src={currentSpeaker === 'anna' ? '/public-pics/anna.jpg' : '/public-pics/joshua.jpg'}
+                        alt={currentSpeaker === 'anna' ? 'Anna, Azubiberaterin' : 'Joshua, Azubiberater'}
                         className='w-7 h-7 rounded-full border border-[#dd232d] object-cover mr-2'
                       />
                       <div className='bg-gradient-to-br from-gray-100 to-gray-200 text-[#252422] border border-gray-200 text-left px-5 py-2 max-w-[75%] shadow-lg relative agent-bubble flex items-center gap-2' style={{ fontSize: 13, lineHeight: 1.45, minWidth: 60, borderRadius: '18px 18px 18px 4px' }}>
                         <span className="flex flex-row gap-1 items-center" aria-label="Agent tippt">
-                          <span className={`w-2 h-2 rounded-full animate-bounce`} style={{backgroundColor: selectedAgent === 'anna' ? '#dd232d' : '#028e4a', animationDelay:'0s'}}></span>
-                          <span className={`w-2 h-2 rounded-full animate-bounce`} style={{backgroundColor: selectedAgent === 'anna' ? '#dd232d' : '#028e4a', animationDelay:'0.18s'}}></span>
-                          <span className={`w-2 h-2 rounded-full animate-bounce`} style={{backgroundColor: selectedAgent === 'anna' ? '#dd232d' : '#028e4a', animationDelay:'0.36s'}}></span>
+                          <span className={`w-2 h-2 rounded-full animate-bounce`} style={{backgroundColor: currentSpeaker === 'anna' ? '#dd232d' : '#028e4a', animationDelay:'0s'}}></span>
+                          <span className={`w-2 h-2 rounded-full animate-bounce`} style={{backgroundColor: currentSpeaker === 'anna' ? '#dd232d' : '#028e4a', animationDelay:'0.18s'}}></span>
+                          <span className={`w-2 h-2 rounded-full animate-bounce`} style={{backgroundColor: currentSpeaker === 'anna' ? '#dd232d' : '#028e4a', animationDelay:'0.36s'}}></span>
                         </span>
                         <span style={{ position: 'absolute', left: -8, bottom: 0, width: 0, height: 0, borderTop: '10px solid transparent', borderBottom: '10px solid transparent', borderRight: '12px solid #e5e7eb' }} />
                       </div>
