@@ -387,22 +387,38 @@ export default function VoiceAssistant() {
           </div>
         </div>
         {/* Voice Assistant Circle entfernt, Button bleibt */}
-        <div className='flex flex-col items-center mb-8'>
+        <div className='flex flex-col items-center mb-8 relative w-full'>
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.97 }}
             onClick={isActive ? endConversation : startConversation}
-            className={`mb-2 px-6 py-2 rounded-2xl text-base font-semibold shadow-md transition-all duration-200 focus:outline-none
+            className={`mb-2 px-6 py-2 rounded-2xl text-base font-semibold shadow-md transition-all duration-200 focus:outline-none w-full relative flex items-center justify-center
               ${isActive ? 'bg-gray-200 text-[#dd232d] hover:bg-gray-300' : selectedAgent === 'anna' ? 'bg-[#dd232d] text-white hover:bg-[#b81c24]' : 'bg-[#028e4a] text-white hover:bg-[#026c39]'}
               ${!privacyChecked && !isActive ? 'opacity-50 cursor-not-allowed' : ''}`}
             aria-label={isActive ? 'Gespräch beenden' : 'Gespräch starten'}
             disabled={!privacyChecked && !isActive}
           >
             {isActive ? 'Gespräch beenden' : `Gespräch mit ${selectedAgent === 'anna' ? 'Anna' : 'Joshua'} starten`}
+            {/* Status-Kreis rechts am Button */}
+            <span
+              className="absolute -right-6 top-1/2 -translate-y-1/2"
+              aria-label={connectionStatus === 'connected' ? 'Verbunden' : 'Nicht verbunden'}
+            >
+              <span
+                className={`block w-12 h-12 rounded-full border-4 ${connectionStatus === 'connected' ? 'border-white bg-green-600' : 'border-white bg-red-600'}`}
+                style={{ boxShadow: '0 0 0 2px #fff', position: 'relative' }}
+              >
+                {connectionStatus === 'connected' && (
+                  <svg viewBox="0 0 20 20" width="22" height="22" style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)'}} aria-hidden="true" focusable="false">
+                    <polyline points="5,11 9,15 15,7" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+              </span>
+            </span>
           </motion.button>
         </div>
         {/* Datenschutz-Checkbox kompakt und direkt unter dem Button, Abstand nach oben und unten optimiert */}
-        <div className="w-full flex justify-center items-center" style={{ marginTop: '-2px', marginBottom: '22px' }}>
+        <div className="w-full flex justify-center items-center" style={{ marginTop: '-28px', marginBottom: '28px' }}>
           <div className="flex items-center justify-center w-full max-w-[320px] mx-auto">
             <input
               id="privacy-check"
@@ -424,7 +440,6 @@ export default function VoiceAssistant() {
             </label>
           </div>
         </div>
-        {/* Action Buttons: Chat, Mail, Jobs in einer Zeile */}
         {/* Zeige Chat Button: eigene Zeile, volle Breite, max wie Chatfenster */}
         <div className="flex w-full justify-center mb-2">
           <motion.button
@@ -439,211 +454,250 @@ export default function VoiceAssistant() {
             <span className='leading-tight'>{showChat ? 'Chat verbergen' : 'Zeige Chat'}</span>
           </motion.button>
         </div>
-        <div className="flex flex-row gap-3 mb-2 w-full justify-center max-w-[420px] mx-auto">
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={() => window.location.href = 'mailto:personalabteilung@moelders.de'}
-            className='flex-1 px-2 py-1.5 rounded-xl bg-[#dd232d] text-white text-xs font-semibold flex flex-col items-center justify-center space-y-0.5 shadow-sm border border-[#dd232d] hover:bg-[#b81c24] transition-colors h-10 min-w-0'
-            type="button"
-            style={{lineHeight: 1.1}}
-          >
-            <Mail className='w-4 h-4 mb-0.5' />
-            <span className='leading-tight'>E-Mail</span>
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={() => window.open('https://wa.me/4915123206142', '_blank')}
-            className='flex-1 px-2 py-1.5 rounded-xl bg-[#25D366] text-white text-xs font-semibold flex flex-col items-center justify-center space-y-0.5 shadow-sm border border-[#25D366] hover:bg-[#1ebe57] transition-colors h-10 min-w-0'
-            type="button"
-            style={{lineHeight: 1.1}}
-          >
-            {/* WhatsApp SVG Icon */}
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="currentColor" className="w-4 h-4 mb-0.5"><path d="M16 3C9.373 3 4 8.373 4 15c0 2.385.832 4.584 2.236 6.37L4.062 28.25a1 1 0 0 0 1.312 1.312l6.88-2.174A11.96 11.96 0 0 0 16 27c6.627 0 12-5.373 12-12S22.627 3 16 3zm0 2c5.523 0 10 4.477 10 10s-4.477 10-10 10a9.96 9.96 0 0 1-5.09-1.39 1 1 0 0 0-.77-.09l-5.13 1.62 1.62-5.13a1 1 0 0 0-.09-.77A9.96 9.96 0 0 1 6 15c0-5.523 4.477-10 10-10zm-4.09 6.09c-.23-.52-.47-.53-.68-.54-.18-.01-.39-.01-.6-.01-.21 0-.55.08-.84.39-.29.31-1.1 1.08-1.1 2.63 0 1.55 1.13 3.05 1.29 3.26.16.21 2.21 3.37 5.44 4.59.76.29 1.36.46 1.83.59.77.2 1.47.17 2.02.1.62-.08 1.91-.78 2.18-1.54.27-.76.27-1.41.19-1.54-.08-.13-.29-.21-.6-.37-.31-.16-1.91-.94-2.2-1.05-.29-.11-.5-.16-.71.16-.21.32-.82 1.05-1.01 1.27-.19.22-.37.24-.68.08-.31-.16-1.31-.48-2.5-1.53-.92-.77-1.54-1.72-1.72-2.03-.18-.31-.02-.48.14-.64.14-.14.31-.37.47-.56.16-.19.21-.32.32-.53.11-.21.06-.4-.02-.56z"/></svg>
-            <span className='leading-tight'>WhatsApp</span>
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={() => window.open('https://www.moelders.de/unternehmen/jobboerse', '_blank', 'noopener,noreferrer')}
-            className='flex-1 px-2 py-1.5 rounded-xl bg-[#252422] text-white text-xs font-semibold flex flex-col items-center justify-center space-y-0.5 shadow-sm border border-[#252422] hover:bg-[#444] transition-colors h-10 min-w-0'
-            type="button"
-            style={{lineHeight: 1.1}}
-          >
-            <Bot className='w-4 h-4 mb-0.5' />
-            <span className='leading-tight'>Stellen</span>
-          </motion.button>
-        </div>
+        {/* Action Buttons: E-Mail, WhatsApp, Stellen - Position je nach Chat-Status */}
+        {!showChat && (
+          <div className="flex flex-row gap-3 mb-2 w-full justify-center max-w-[420px] mx-auto">
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => window.location.href = 'mailto:personalabteilung@moelders.de'}
+              className='flex-1 px-2 py-1.5 rounded-xl bg-[#dd232d] text-white text-xs font-semibold flex flex-col items-center justify-center space-y-0.5 shadow-sm border border-[#dd232d] hover:bg-[#b81c24] transition-colors h-10 min-w-0'
+              type="button"
+              style={{lineHeight: 1.1}}
+            >
+              <Mail className='w-4 h-4 mb-0.5' />
+              <span className='leading-tight'>E-Mail</span>
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => window.open('https://wa.me/4915123206142', '_blank')}
+              className='flex-1 px-2 py-1.5 rounded-xl bg-[#25D366] text-white text-xs font-semibold flex flex-col items-center justify-center space-y-0.5 shadow-sm border border-[#25D366] hover:bg-[#1ebe57] transition-colors h-10 min-w-0'
+              type="button"
+              style={{lineHeight: 1.1}}
+            >
+              {/* WhatsApp SVG Icon */}
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="currentColor" className="w-4 h-4 mb-0.5"><path d="M16 3C9.373 3 4 8.373 4 15c0 2.385.832 4.584 2.236 6.37L4.062 28.25a1 1 0 0 0 1.312 1.312l6.88-2.174A11.96 11.96 0 0 0 16 27c6.627 0 12-5.373 12-12S22.627 3 16 3zm0 2c5.523 0 10 4.477 10 10s-4.477 10-10 10a9.96 9.96 0 0 1-5.09-1.39 1 1 0 0 0-.77-.09l-5.13 1.62 1.62-5.13a1 1 0 0 0-.09-.77A9.96 9.96 0 0 1 6 15c0-5.523 4.477-10 10-10zm-4.09 6.09c-.23-.52-.47-.53-.68-.54-.18-.01-.39-.01-.6-.01-.21 0-.55.08-.84.39-.29.31-1.1 1.08-1.1 2.63 0 1.55 1.13 3.05 1.29 3.26.16.21 2.21 3.37 5.44 4.59.76.29 1.36.46 1.83.59.77.2 1.47.17 2.02.1.62-.08 1.91-.78 2.18-1.54.27-.76.27-1.41.19-1.54-.08-.13-.29-.21-.6-.37-.31-.16-1.91-.94-2.2-1.05-.29-.11-.5-.16-.71.16-.21.32-.82 1.05-1.01 1.27-.19.22-.37.24-.68.08-.31-.16-1.31-.48-2.5-1.53-.92-.77-1.54-1.72-1.72-2.03-.18-.31-.02-.48.14-.64.14-.14.31-.37.47-.56.16-.19.21-.32.32-.53.11-.21.06-.4-.02-.56z"/></svg>
+              <span className='leading-tight'>WhatsApp</span>
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => window.open('https://www.moelders.de/unternehmen/jobboerse', '_blank', 'noopener,noreferrer')}
+              className='flex-1 px-2 py-1.5 rounded-xl bg-[#252422] text-white text-xs font-semibold flex flex-col items-center justify-center space-y-0.5 shadow-sm border border-[#252422] hover:bg-[#444] transition-colors h-10 min-w-0'
+              type="button"
+              style={{lineHeight: 1.1}}
+            >
+              <Bot className='w-4 h-4 mb-0.5' />
+              <span className='leading-tight'>Stellen</span>
+            </motion.button>
+          </div>
+        )}
         {/* Chat area */}
         <AnimatePresence>
           {showChat && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className='w-full bg-white rounded-2xl overflow-hidden shadow-xl mb-2 mt-6 border border-[#eee]'
-              style={{ boxShadow: '0 4px 32px 0 rgba(34,34,34,0.10)', backdropFilter: 'blur(0.5px)' }}
-            >
-              {/* Header mit Avatar und Status */}
-              <div className='flex items-center gap-2 px-4 pt-4 pb-1' style={{ background: '#f7f7f8', borderTopLeftRadius: '1rem', borderTopRightRadius: '1rem' }}>
-                <img
-                  src={selectedAgent === 'anna' ? '/public-pics/anna.jpg' : '/public-pics/joshua.jpg'}
-                  alt={selectedAgent === 'anna' ? 'Anna, Azubiberaterin' : 'Joshua, Azubiberater'}
-                  className='w-8 h-8 rounded-full border border-[#dd232d] object-cover shadow'
-                />
-                <span className='text-gray-700 text-sm rounded-full px-3 py-0.5 font-medium'>Ich höre dir zu...</span>
-              </div>
-              {/* Chatverlauf */}
-              <div
-                ref={scrollAreaRef}
-                className='h-80 overflow-y-auto px-4 py-3 space-y-5 scrollbar-thin scrollbar-thumb-[#eee] scrollbar-track-[#fafafa]'
+            <>
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className='w-full bg-white rounded-2xl overflow-hidden shadow-xl mb-2 mt-6 border border-[#eee]'
+                style={{ boxShadow: '0 4px 32px 0 rgba(34,34,34,0.10)', backdropFilter: 'blur(0.5px)' }}
               >
-                {messages.map((message, index) => (
-                  <div
-                    key={index}
-                    className={`flex ${
-                      message.source === 'user'
-                        ? 'justify-end'
-                        : 'justify-start'
-                    } items-end w-full`}
-                  >
-                    {message.source !== 'user' && (
+                {/* Header mit Avatar und Status */}
+                <div className='flex items-center gap-2 px-4 pt-4 pb-1' style={{ background: '#f7f7f8', borderTopLeftRadius: '1rem', borderTopRightRadius: '1rem' }}>
+                  <img
+                    src={selectedAgent === 'anna' ? '/public-pics/anna.jpg' : '/public-pics/joshua.jpg'}
+                    alt={selectedAgent === 'anna' ? 'Anna, Azubiberaterin' : 'Joshua, Azubiberater'}
+                    className='w-8 h-8 rounded-full border border-[#dd232d] object-cover shadow'
+                  />
+                  <span className='text-gray-700 text-sm rounded-full px-3 py-0.5 font-medium'>Ich höre dir zu...</span>
+                </div>
+                {/* Chatverlauf */}
+                <div
+                  ref={scrollAreaRef}
+                  className='h-80 overflow-y-auto px-4 py-3 space-y-5 scrollbar-thin scrollbar-thumb-[#eee] scrollbar-track-[#fafafa]'
+                >
+                  {messages.map((message, index) => (
+                    <div
+                      key={index}
+                      className={`flex ${
+                        message.source === 'user'
+                          ? 'justify-end'
+                          : 'justify-start'
+                      } items-end w-full`}
+                    >
+                      {message.source !== 'user' && (
+                        <img
+                          src={selectedAgent === 'anna' ? '/public-pics/anna.jpg' : '/public-pics/joshua.jpg'}
+                          alt={selectedAgent === 'anna' ? 'Anna, Azubiberaterin' : 'Joshua, Azubiberater'}
+                          className='w-7 h-7 rounded-full border border-[#dd232d] object-cover mr-2'
+                        />
+                      )}
+                      <div
+                        className={
+                          message.source === 'user'
+                            ? 'bg-gradient-to-br from-[#dd232d] to-[#b81c24] text-white border border-[#dd232d] text-right px-5 py-2 max-w-[75%] shadow-lg relative user-bubble'
+                            : 'bg-gradient-to-br from-gray-100 to-gray-200 text-[#252422] border border-gray-200 text-left px-5 py-2 max-w-[75%] shadow-lg relative agent-bubble'
+                        }
+                        style={{ fontSize: 13, lineHeight: 1.45, minWidth: 60, borderRadius: message.source === 'user' ? '18px 18px 4px 18px' : '18px 18px 18px 4px' }}
+                      >
+                        {message.message}
+                        {/* Sprechblasen-Pfeil wie im Beispielbild */}
+                        {message.source === 'user' ? (
+                          <span style={{ position: 'absolute', right: -8, bottom: 0, width: 0, height: 0, borderTop: '10px solid transparent', borderBottom: '10px solid transparent', borderLeft: '12px solid #b81c24' }} />
+                        ) : (
+                          <span style={{ position: 'absolute', left: -8, bottom: 0, width: 0, height: 0, borderTop: '10px solid transparent', borderBottom: '10px solid transparent', borderRight: '12px solid #e5e7eb' }} />
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  {/* Ladeindikator für Agenten-Nachricht, neutral (drei Punkte) */}
+                  {pendingAgentMessage && (
+                    <div className="flex justify-start items-end w-full">
                       <img
                         src={selectedAgent === 'anna' ? '/public-pics/anna.jpg' : '/public-pics/joshua.jpg'}
                         alt={selectedAgent === 'anna' ? 'Anna, Azubiberaterin' : 'Joshua, Azubiberater'}
                         className='w-7 h-7 rounded-full border border-[#dd232d] object-cover mr-2'
                       />
-                    )}
-                    <div
-                      className={
-                        message.source === 'user'
-                          ? 'bg-gradient-to-br from-[#dd232d] to-[#b81c24] text-white border border-[#dd232d] text-right px-5 py-2 max-w-[75%] shadow-lg relative user-bubble'
-                          : 'bg-gradient-to-br from-gray-100 to-gray-200 text-[#252422] border border-gray-200 text-left px-5 py-2 max-w-[75%] shadow-lg relative agent-bubble'
-                      }
-                      style={{ fontSize: 13, lineHeight: 1.45, minWidth: 60, borderRadius: message.source === 'user' ? '18px 18px 4px 18px' : '18px 18px 18px 4px' }}
-                    >
-                      {message.message}
-                      {/* Sprechblasen-Pfeil wie im Beispielbild */}
-                      {message.source === 'user' ? (
-                        <span style={{ position: 'absolute', right: -8, bottom: 0, width: 0, height: 0, borderTop: '10px solid transparent', borderBottom: '10px solid transparent', borderLeft: '12px solid #b81c24' }} />
-                      ) : (
+                      <div className='bg-gradient-to-br from-gray-100 to-gray-200 text-[#252422] border border-gray-200 text-left px-5 py-2 max-w-[75%] shadow-lg relative agent-bubble flex items-center gap-2' style={{ fontSize: 13, lineHeight: 1.45, minWidth: 60, borderRadius: '18px 18px 18px 4px' }}>
+                        <span className="flex flex-row gap-1 items-center" aria-label="Agent tippt">
+                          <span className={`w-2 h-2 rounded-full animate-bounce`} style={{backgroundColor: selectedAgent === 'anna' ? '#dd232d' : '#028e4a', animationDelay:'0s'}}></span>
+                          <span className={`w-2 h-2 rounded-full animate-bounce`} style={{backgroundColor: selectedAgent === 'anna' ? '#dd232d' : '#028e4a', animationDelay:'0.18s'}}></span>
+                          <span className={`w-2 h-2 rounded-full animate-bounce`} style={{backgroundColor: selectedAgent === 'anna' ? '#dd232d' : '#028e4a', animationDelay:'0.36s'}}></span>
+                        </span>
                         <span style={{ position: 'absolute', left: -8, bottom: 0, width: 0, height: 0, borderTop: '10px solid transparent', borderBottom: '10px solid transparent', borderRight: '12px solid #e5e7eb' }} />
-                      )}
+                      </div>
                     </div>
+                  )}
+                </div>
+                {/* Footer: Kompakte Action Buttons in einer Zeile, darunter Download-Button über die ganze Breite */}
+                <div className='flex flex-col gap-2 px-4 pb-3 pt-1 border-t border-[#eee] bg-white'>
+                  <div className='flex flex-row justify-between items-center gap-2 w-full mb-1'>
+                    <motion.button
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => window.location.href = 'mailto:personalabteilung@moelders.de'}
+                      className='flex-1 px-1.5 py-1 rounded-lg bg-[#dd232d] text-white text-[10px] font-semibold flex flex-col items-center justify-center shadow-sm border border-[#dd232d] hover:bg-[#b81c24] transition-colors h-8 min-w-0 text-center'
+                      type="button"
+                      style={{lineHeight: 1.1}}
+                    >
+                      <Mail className='w-3.5 h-3.5 mb-0.5' />
+                      <span className='leading-tight'>E-Mail</span>
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => window.open('https://wa.me/4915123206142', '_blank')}
+                      className='flex-1 px-1.5 py-1 rounded-lg bg-[#25D366] text-white text-[10px] font-semibold flex flex-col items-center justify-center shadow-sm border border-[#25D366] hover:bg-[#1ebe57] transition-colors h-8 min-w-0 text-center'
+                      type="button"
+                      style={{lineHeight: 1.1}}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="currentColor" className="w-3.5 h-3.5 mb-0.5"><path d="M16 3C9.373 3 4 8.373 4 15c0 2.385.832 4.584 2.236 6.37L4.062 28.25a1 1 0 0 0 1.312 1.312l6.88-2.174A11.96 11.96 0 0 0 16 27c6.627 0 12-5.373 12-12S22.627 3 16 3zm0 2c5.523 0 10 4.477 10 10s-4.477 10-10 10a9.96 9.96 0 0 1-5.09-1.39 1 1 0 0 0-.77-.09l-5.13 1.62 1.62-5.13a1 1 0 0 0-.09-.77A9.96 9.96 0 0 1 6 15c0-5.523 4.477-10 10-10zm-4.09 6.09c-.23-.52-.47-.53-.68-.54-.18-.01-.39-.01-.6-.01-.21 0-.55.08-.84.39-.29.31-1.1 1.08-1.1 2.63 0 1.55 1.13 3.05 1.29 3.26.16.21 2.21 3.37 5.44 4.59.76.29 1.36.46 1.83.59.77.2 1.47.17 2.02.1.62-.08 1.91-.78 2.18-1.54.27-.76.27-1.41.19-1.54-.08-.13-.29-.21-.6-.37-.31-.16-1.91-.94-2.2-1.05-.29-.11-.5-.16-.71.16-.21.32-.82 1.05-1.01 1.27-.19.22-.37.24-.68.08-.31-.16-1.31-.48-2.5-1.53-.92-.77-1.54-1.72-1.72-2.03-.18-.31-.02-.48.14-.64.14-.14.31-.37.47-.56.16-.19.21-.32.32-.53.11-.21.06-.4-.02-.56z"/></svg>
+                      <span className='leading-tight'>WhatsApp</span>
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => window.open('https://www.moelders.de/unternehmen/jobboerse', '_blank', 'noopener,noreferrer')}
+                      className='flex-1 px-1.5 py-1 rounded-lg bg-[#252422] text-white text-[10px] font-semibold flex flex-col items-center justify-center shadow-sm border border-[#252422] hover:bg-[#444] transition-colors h-8 min-w-0 text-center'
+                      type="button"
+                      style={{lineHeight: 1.1}}
+                    >
+                      <Bot className='w-3.5 h-3.5 mb-0.5' />
+                      <span className='leading-tight'>Stellen</span>
+                    </motion.button>
                   </div>
-                ))}
-                {/* Ladeindikator für Agenten-Nachricht, neutral (drei Punkte) */}
-                {pendingAgentMessage && (
-                  <div className="flex justify-start items-end w-full">
-                    <img
-                      src={selectedAgent === 'anna' ? '/public-pics/anna.jpg' : '/public-pics/joshua.jpg'}
-                      alt={selectedAgent === 'anna' ? 'Anna, Azubiberaterin' : 'Joshua, Azubiberater'}
-                      className='w-7 h-7 rounded-full border border-[#dd232d] object-cover mr-2'
-                    />
-                    <div className='bg-gradient-to-br from-gray-100 to-gray-200 text-[#252422] border border-gray-200 text-left px-5 py-2 max-w-[75%] shadow-lg relative agent-bubble flex items-center gap-2' style={{ fontSize: 13, lineHeight: 1.45, minWidth: 60, borderRadius: '18px 18px 18px 4px' }}>
-                      <span className="flex flex-row gap-1 items-center" aria-label="Agent tippt">
-                        <span className={`w-2 h-2 rounded-full animate-bounce`} style={{backgroundColor: selectedAgent === 'anna' ? '#dd232d' : '#028e4a', animationDelay:'0s'}}></span>
-                        <span className={`w-2 h-2 rounded-full animate-bounce`} style={{backgroundColor: selectedAgent === 'anna' ? '#dd232d' : '#028e4a', animationDelay:'0.18s'}}></span>
-                        <span className={`w-2 h-2 rounded-full animate-bounce`} style={{backgroundColor: selectedAgent === 'anna' ? '#dd232d' : '#028e4a', animationDelay:'0.36s'}}></span>
-                      </span>
-                      <span style={{ position: 'absolute', left: -8, bottom: 0, width: 0, height: 0, borderTop: '10px solid transparent', borderBottom: '10px solid transparent', borderRight: '12px solid #e5e7eb' }} />
-                    </div>
+                  <button
+                    className='w-full mt-1 p-1.5 rounded-lg border border-[#dd232d] text-[#dd232d] hover:bg-[#dd232d] hover:text-white transition-colors flex items-center justify-center gap-1 text-xs min-w-0 h-8'
+                    onClick={() => downloadTranscript(messages)}
+                    aria-label='Chat herunterladen'
+                    type='button'
+                  >
+                    <Download className='w-4 h-4' />
+                    <span className='font-medium'>Gespräch herunterladen</span>
+                  </button>
+                  {/* Status-Badge: Immer am unteren Rand des Chatfensters (unsichtbar gemacht) */}
+                  <div className="w-full flex justify-center pt-2" style={{display:'none'}}>
+                    {connectionStatus === 'connected' && (
+                      <div className="inline-flex items-center bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full shadow-md">
+                        <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>Verbunden
+                      </div>
+                    )}
+                    {connectionStatus === 'connecting' && (
+                      <div className="inline-flex items-center bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded-full shadow-md">
+                        <span className="w-2 h-2 bg-yellow-500 rounded-full mr-1 animate-pulse"></span>Verbinde…
+                      </div>
+                    )}
+                    {connectionStatus === 'disconnected' && (
+                      <div className="inline-flex items-center bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full shadow-md">
+                        <span className="w-2 h-2 bg-red-500 rounded-full mr-1"></span>Nicht verbunden
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-              {/* Inputbereich entfernt, Download Button hinzugefügt */}
-              <div className='flex items-center justify-end gap-2 px-4 pb-3 pt-1 border-t border-[#eee] bg-white'>
-                <button
-                  className='p-1.5 rounded-lg border border-[#dd232d] text-[#dd232d] hover:bg-[#dd232d] hover:text-white transition-colors flex items-center gap-1 text-xs'
-                  onClick={() => downloadTranscript(messages)}
-                  aria-label='Chat herunterladen'
-                  type='button'
-                >
-                  <Download className='w-4 h-4' />
-                  <span className='font-medium'>Lade dir unser Gespräch runter</span>
-                </button>
-              </div>
-              {/* Status-Badge jetzt am Ende des Chatfensters */}
-              <div className='flex justify-center mt-2 mb-2'>
-                {connectionStatus === 'connected' && (
-                  <div className="inline-flex items-center bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">
-                    <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>Verbunden
-                  </div>
-                )}
-                {connectionStatus === 'connecting' && (
-                  <div className="inline-flex items-center bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded-full">
-                    <span className="w-2 h-2 bg-yellow-500 rounded-full mr-1 animate-pulse"></span>Verbinde…
-                  </div>
-                )}
-                {connectionStatus === 'disconnected' && (
-                  <div className="inline-flex items-center bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full">
-                    <span className="w-2 h-2 bg-red-500 rounded-full mr-1"></span>Nicht verbunden
-                  </div>
-                )}
-              </div>
-            </motion.div>
+                </div>
+              </motion.div>
+            </>
           )}
         </AnimatePresence>
-
-        {/* Status-Badge am Seitenende, wenn Chat zu */}
+        {/* Status-Badge: Unter den Action-Buttons, wenn Chat geschlossen */}
         {!showChat && (
-          <div className='flex justify-center mt-3 mb-1'>
+          <div className="w-full flex justify-center mb-2" style={{ display: 'none' }}>
+            {/* Status-Badge ist jetzt unsichtbar, da Status am Button angezeigt wird */}
             {connectionStatus === 'connected' && (
-              <div className="inline-flex items-center bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">
+              <div className="inline-flex items-center bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full shadow-md">
                 <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>Verbunden
               </div>
             )}
             {connectionStatus === 'connecting' && (
-              <div className="inline-flex items-center bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded-full">
+              <div className="inline-flex items-center bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded-full shadow-md">
                 <span className="w-2 h-2 bg-yellow-500 rounded-full mr-1 animate-pulse"></span>Verbinde…
               </div>
             )}
             {connectionStatus === 'disconnected' && (
-              <div className="inline-flex items-center bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full">
+              <div className="inline-flex items-center bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full shadow-md">
                 <span className="w-2 h-2 bg-red-500 rounded-full mr-1"></span>Nicht verbunden
               </div>
             )}
           </div>
         )}
-
-        {/* Datenschutz-Modal */}
-        {showPrivacyModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-            <div className="bg-white rounded-xl shadow-2xl max-w-xs w-full p-5 flex flex-col items-center border border-[#eee] relative">
+      </div>
+      {/* Datenschutz-Modal */}
+      {showPrivacyModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-2xl max-w-xs w-full p-5 flex flex-col items-center border border-[#eee] relative">
+            <button
+              className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-xl font-bold"
+              aria-label="Schließen"
+              onClick={() => setShowPrivacyModal(false)}
+              style={{background:'none',border:'none',padding:0,lineHeight:1}}
+            >×</button>
+            <div className="text-xs text-gray-800 mb-4 text-center leading-snug">
+              Mit dem Klick auf <b>„Zustimmen“</b> und bei jeder weiteren Interaktion mit diesem KI-Agenten erkläre ich mich damit einverstanden, dass meine Kommunikation aufgezeichnet, gespeichert und mit Drittanbietern geteilt wird – wie in der <a href="https://www.moelders.de/datenschutz" target="_blank" rel="noopener noreferrer" className="underline text-[#dd232d]">Datenschutzrichtlinie</a> beschrieben.<br /><br />
+              Wenn Sie nicht möchten, dass Ihre Gespräche aufgezeichnet werden, verzichten Sie bitte auf die Nutzung dieses Dienstes.
+            </div>
+            <div className="flex flex-row gap-3 w-full mt-2">
               <button
-                className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-xl font-bold"
-                aria-label="Schließen"
-                onClick={() => setShowPrivacyModal(false)}
-                style={{background:'none',border:'none',padding:0,lineHeight:1}}
-              >×</button>
-              <div className="text-xs text-gray-800 mb-4 text-center leading-snug">
-                Mit dem Klick auf <b>„Zustimmen“</b> und bei jeder weiteren Interaktion mit diesem KI-Agenten erkläre ich mich damit einverstanden, dass meine Kommunikation aufgezeichnet, gespeichert und mit Drittanbietern geteilt wird – wie in der <a href="https://www.moelders.de/datenschutz" target="_blank" rel="noopener noreferrer" className="underline text-[#dd232d]">Datenschutzrichtlinie</a> beschrieben.<br /><br />
-                Wenn Sie nicht möchten, dass Ihre Gespräche aufgezeichnet werden, verzichten Sie bitte auf die Nutzung dieses Dienstes.
-              </div>
-              <div className="flex flex-row gap-3 w-full mt-2">
-                <button
-                  className="flex-1 px-3 py-1.5 rounded-lg bg-[#dd232d] text-white text-xs font-semibold hover:bg-[#b81c24] transition-colors"
-                  onClick={() => {
-                    setPrivacyAccepted(true);
-                    setPrivacyChecked(true);
-                    setShowPrivacyModal(false);
-                  }}
-                >Zustimmen</button>
-                <button
-                  className="flex-1 px-3 py-1.5 rounded-lg bg-gray-200 text-gray-700 text-xs font-semibold hover:bg-gray-300 transition-colors"
-                  onClick={() => {
-                    setPrivacyAccepted(false);
-                    setPrivacyChecked(false);
-                    setShowPrivacyModal(false);
-                  }}
-                >Ablehnen</button>
-              </div>
+                className="flex-1 px-3 py-1.5 rounded-lg bg-[#dd232d] text-white text-xs font-semibold hover:bg-[#b81c24] transition-colors"
+                onClick={() => {
+                  setPrivacyAccepted(true);
+                  setPrivacyChecked(true);
+                  setShowPrivacyModal(false);
+                }}
+              >Zustimmen</button>
+              <button
+                className="flex-1 px-3 py-1.5 rounded-lg bg-gray-200 text-gray-700 text-xs font-semibold hover:bg-gray-300 transition-colors"
+                onClick={() => {
+                  setPrivacyAccepted(false);
+                  setPrivacyChecked(false);
+                  setShowPrivacyModal(false);
+                }}
+              >Ablehnen</button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }
