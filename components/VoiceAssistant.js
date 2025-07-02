@@ -607,6 +607,42 @@ export default function VoiceAssistant() {
             )}
           </div>
         )}
+
+        {/* Datenschutz-Modal */}
+        {showPrivacyModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <div className="bg-white rounded-xl shadow-2xl max-w-xs w-full p-5 flex flex-col items-center border border-[#eee] relative">
+              <button
+                className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-xl font-bold"
+                aria-label="Schließen"
+                onClick={() => setShowPrivacyModal(false)}
+                style={{background:'none',border:'none',padding:0,lineHeight:1}}
+              >×</button>
+              <div className="text-xs text-gray-800 mb-4 text-center leading-snug">
+                Mit dem Klick auf <b>„Zustimmen“</b> und bei jeder weiteren Interaktion mit diesem KI-Agenten erkläre ich mich damit einverstanden, dass meine Kommunikation aufgezeichnet, gespeichert und mit Drittanbietern geteilt wird – wie in der <a href="https://www.moelders.de/datenschutz" target="_blank" rel="noopener noreferrer" className="underline text-[#dd232d]">Datenschutzrichtlinie</a> beschrieben.<br /><br />
+                Wenn Sie nicht möchten, dass Ihre Gespräche aufgezeichnet werden, verzichten Sie bitte auf die Nutzung dieses Dienstes.
+              </div>
+              <div className="flex flex-row gap-3 w-full mt-2">
+                <button
+                  className="flex-1 px-3 py-1.5 rounded-lg bg-[#dd232d] text-white text-xs font-semibold hover:bg-[#b81c24] transition-colors"
+                  onClick={() => {
+                    setPrivacyAccepted(true);
+                    setPrivacyChecked(true);
+                    setShowPrivacyModal(false);
+                  }}
+                >Zustimmen</button>
+                <button
+                  className="flex-1 px-3 py-1.5 rounded-lg bg-gray-200 text-gray-700 text-xs font-semibold hover:bg-gray-300 transition-colors"
+                  onClick={() => {
+                    setPrivacyAccepted(false);
+                    setPrivacyChecked(false);
+                    setShowPrivacyModal(false);
+                  }}
+                >Ablehnen</button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
