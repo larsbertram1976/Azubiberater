@@ -386,36 +386,45 @@ export default function VoiceAssistant() {
             </div>
           </div>
         </div>
-        {/* Voice Assistant Circle entfernt, Button bleibt */}
-        <div className='flex flex-col items-center mb-8 relative w-full'>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={isActive ? endConversation : startConversation}
-            className={`mb-2 px-6 py-2 rounded-2xl text-base font-semibold shadow-md transition-all duration-200 focus:outline-none w-full relative flex items-center justify-center
-              ${isActive ? 'bg-gray-200 text-[#dd232d] hover:bg-gray-300' : selectedAgent === 'anna' ? 'bg-[#dd232d] text-white hover:bg-[#b81c24]' : 'bg-[#028e4a] text-white hover:bg-[#026c39]'}
-              ${!privacyChecked && !isActive ? 'opacity-50 cursor-not-allowed' : ''}`}
-            aria-label={isActive ? 'Gespräch beenden' : 'Gespräch starten'}
-            disabled={!privacyChecked && !isActive}
-          >
-            {isActive ? 'Gespräch beenden' : `Gespräch mit ${selectedAgent === 'anna' ? 'Anna' : 'Joshua'} starten`}
-            {/* Status-Kreis rechts am Button */}
-            <span
-              className="absolute -right-6 top-1/2 -translate-y-1/2"
-              aria-label={connectionStatus === 'connected' ? 'Verbunden' : 'Nicht verbunden'}
-            >
-              <span
-                className={`block w-12 h-12 rounded-full border-4 ${connectionStatus === 'connected' ? 'border-white bg-green-600' : 'border-white bg-red-600'}`}
-                style={{ boxShadow: '0 0 0 2px #fff', position: 'relative' }}
+        {/* Gespräch starten Button + Status-Kreis exakt wie Chatfenster, Status-Kreis zentriert */}
+        <div className='flex flex-col items-center mb-8 relative w-full max-w-[420px]'>
+          <div className="w-full max-w-[420px] flex flex-row items-center justify-center relative">
+            {/* Button + Status-Kreis als bündige Einheit, Kreis bleibt im Button! */}
+            <div className="relative w-full max-w-[420px] flex items-center justify-center mx-auto">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={isActive ? endConversation : startConversation}
+                className={`mb-2 pr-4 pl-6 py-2 rounded-2xl text-base font-semibold shadow-md transition-all duration-200 focus:outline-none flex-grow-0 flex-shrink-0 flex items-center justify-between relative w-full`
+                  + (isActive ? ' bg-gray-200 text-[#dd232d] hover:bg-gray-300' : selectedAgent === 'anna' ? ' bg-[#dd232d] text-white hover:bg-[#b81c24]' : ' bg-[#028e4a] text-white hover:bg-[#026c39]')
+                  + (!privacyChecked && !isActive ? ' opacity-50 cursor-not-allowed' : '')}
+                aria-label={isActive ? 'Gespräch beenden' : 'Gespräch starten'}
+                disabled={!privacyChecked && !isActive}
+                style={{height:'48px', minWidth:0, width: '100%', maxWidth: '420px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position:'relative'}}
               >
-                {connectionStatus === 'connected' && (
-                  <svg viewBox="0 0 20 20" width="22" height="22" style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)'}} aria-hidden="true" focusable="false">
-                    <polyline points="5,11 9,15 15,7" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                )}
-              </span>
-            </span>
-          </motion.button>
+                <span className="w-full text-center block" style={{marginRight: '40px'}}>
+                  {isActive ? 'Gespräch beenden' : `Gespräch mit ${selectedAgent === 'anna' ? 'Anna' : 'Joshua'} starten`}
+                </span>
+                {/* Status-Kreis bündig am rechten Rand, IM Button, nicht absolut! */}
+                <span
+                  className="flex items-center justify-center ml-auto"
+                  aria-label={connectionStatus === 'connected' ? 'Verbunden' : 'Nicht verbunden'}
+                  style={{height:'40px', width:'40px'}}
+                >
+                  <span
+                    className={`block w-10 h-10 rounded-full border-4 ${connectionStatus === 'connected' ? 'border-white bg-green-600' : 'border-white bg-red-600'}`}
+                    style={{ boxShadow: '0 0 0 2px #fff', position: 'relative', display:'flex', alignItems:'center', justifyContent:'center' }}
+                  >
+                    {connectionStatus === 'connected' && (
+                      <svg viewBox="0 0 20 20" width="18" height="18" style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)'}} aria-hidden="true" focusable="false">
+                        <polyline points="5,11 9,15 15,7" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    )}
+                  </span>
+                </span>
+              </motion.button>
+            </div>
+          </div>
         </div>
         {/* Datenschutz-Checkbox kompakt und direkt unter dem Button, Abstand nach oben und unten optimiert */}
         <div className="w-full flex justify-center items-center" style={{ marginTop: '-28px', marginBottom: '28px' }}>
