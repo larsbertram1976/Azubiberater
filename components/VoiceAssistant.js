@@ -216,12 +216,12 @@ export default function VoiceAssistant() {
            style={isIframe ? { maxWidth: '100vw' } : {}}>
         {/* Begrüßungstext und Einleitung */}
         <div className="w-full flex flex-col items-center text-center mb-3 px-2">
-          <h2 className="text-lg font-semibold text-[#252422] mb-1">Willkommen beim Mölders Job & Azubiberater!</h2>
+          <h2 className="text-lg font-semibold text-[#252422] mb-1">Willkommen beim Job & Azubiberater!</h2>
           <p className="text-sm text-gray-700 max-w-md leading-snug mb-2">
             Du hast Fragen zu Ausbildung, Jobs oder möchtest mehr über Mölders als Arbeitgeber wissen?
           </p>
           <p className="text-sm text-gray-700 max-w-md leading-snug mb-2">
-            Wähle deinen Berater: Anna oder Joshua beantworten dir gerne alle Fragen rund um offene Stellen, den Bewerbungsprozess und unsere Ausbildungsangebote.
+            Anna beantwortet dir gerne alle Fragen rund um offene Stellen, den Bewerbungsprozess und unsere Ausbildungsangebote.
           </p>
           <p className="text-sm text-gray-700 max-w-md leading-snug">
             Starte das Gespräch oder nutze die Kontaktmöglichkeiten unten. Wir freuen uns auf dich!
@@ -289,16 +289,15 @@ export default function VoiceAssistant() {
           .voice-bar.joshua5 { --bar-color1: #baffc9; --bar-color2: #028e4a; }
         `}</style>
         <div className="flex flex-col items-center gap-2 mb-8 w-full">
-          <span className="text-sm text-gray-700 font-medium mb-1">Mit wem möchtest du sprechen?</span>
           <div className="flex flex-row items-center justify-center gap-8 relative">
-            {/* Anna */}
+            {/* Anna (einziger Agent) */}
             <div className="relative flex flex-col items-center justify-center" style={{minWidth: '8rem', minHeight: '8rem'}}>
-              {selectedAgent === 'anna' && isSpeaking && (
+              {isSpeaking && (
                 <>
                   <span className="absolute inset-0 flex items-center justify-center z-0 pointer-events-none">
-                    <span className="block w-52 h-52 rounded-full bg-gradient-to-tr from-[#dd232d] via-[#ff6f61] to-[#dd232d] opacity-20 animate-pulse-spin-slow blur-[4px]" style={{position:'absolute'}}></span>
-                    <span className="block w-40 h-40 rounded-full bg-gradient-to-br from-[#ff6f61] via-[#dd232d] to-[#ffb199] opacity-20 animate-pulse-spin-rev blur-[6px]" style={{position:'absolute'}}></span>
-                    <span className="block w-32 h-32 rounded-full bg-gradient-to-br from-[#ffb199] via-[#ff6f61] to-[#dd232d] opacity-30 animate-pulse-scale blur-[8px]" style={{position:'absolute'}}></span>
+                    <span className="block w-52 h-52 rounded-full bg-gradient-to-tr from-[#df242c] via-[#ff6f61] to-[#df242c] opacity-20 animate-pulse-spin-slow blur-[4px]" style={{position:'absolute'}}></span>
+                    <span className="block w-40 h-40 rounded-full bg-gradient-to-br from-[#ff6f61] via-[#df242c] to-[#ffb199] opacity-20 animate-pulse-spin-rev blur-[6px]" style={{position:'absolute'}}></span>
+                    <span className="block w-32 h-32 rounded-full bg-gradient-to-br from-[#ffb199] via-[#ff6f61] to-[#df242c] opacity-30 animate-pulse-scale blur-[8px]" style={{position:'absolute'}}></span>
                   </span>
                   {/* Modern Voice Bars, leicht nach unten verschoben und immer zentriert */}
                   <span className="voice-bars" style={{top: '62%', left: '50%', transform: 'translate(-50%, 0)'}}>
@@ -311,13 +310,7 @@ export default function VoiceAssistant() {
                 </>
               )}
               <button
-                onClick={() => {
-                  if (isActive) {
-                    setShowAgentSwitchHint('anna')
-                  } else {
-                    setSelectedAgent('anna')
-                  }
-                }}
+                onClick={() => setSelectedAgent('anna')}
                 className={`flex flex-col items-center focus:outline-none transition-all duration-200 relative z-10`}
                 aria-label="Anna auswählen"
                 type="button"
@@ -327,64 +320,34 @@ export default function VoiceAssistant() {
                 <img
                   src="/public-pics/anna.jpg"
                   alt="Anna, Azubiberaterin"
-                  className={`object-cover shadow rounded-full border-4 border-[#dd232d] transition-all duration-300 relative ${selectedAgent === 'anna' ? 'w-32 h-32 z-10' : 'w-20 h-20 opacity-60 grayscale'}`}
+                  className={`object-cover shadow rounded-full border-4 border-[#df242c] transition-all duration-300 relative w-32 h-32 z-10`}
                 />
                 <span className="text-xs font-medium text-[#252422] mt-2">Anna</span>
               </button>
-              {/* Dezent eingeblendeter Hinweis nur einmal anzeigen */}
-              {showAgentSwitchHint === 'anna' && isActive && (
-                <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-[#252422] text-white text-xs rounded-lg px-3 py-1 shadow-lg opacity-90 z-30 transition-all duration-200 whitespace-nowrap pointer-events-none">
-                  Du bist gerade im Gespräch. Bitte beende das aktuelle Gespräch, um den Assistenten zu wechseln.
-                </div>
-              )}
             </div>
-            {/* Joshua */}
-            <div className="relative flex flex-col items-center justify-center" style={{minWidth: '8rem', minHeight: '8rem'}}>
-              {selectedAgent === 'joshua' && isSpeaking && (
-                <>
-                  <span className="absolute inset-0 flex items-center justify-center z-0 pointer-events-none">
-                    <span className="block w-52 h-52 rounded-full bg-gradient-to-tl from-[#028e4a] via-[#4be585] to-[#028e4a] opacity-20 animate-pulse-spin-rev blur-[4px]" style={{position:'absolute'}}></span>
-                    <span className="block w-40 h-40 rounded-full bg-gradient-to-br from-[#4be585] via-[#028e4a] to-[#baffc9] opacity-20 animate-pulse-spin-slow blur-[6px]" style={{position:'absolute'}}></span>
-                    <span className="block w-32 h-32 rounded-full bg-gradient-to-br from-[#baffc9] via-[#4be585] to-[#028e4a] opacity-30 animate-pulse-scale blur-[8px]" style={{position:'absolute'}}></span>
-                  </span>
-                  {/* Modern Voice Bars, leicht nach unten verschoben und immer zentriert */}
-                  <span className="voice-bars" style={{top: '62%', left: '50%', transform: 'translate(-50%, 0)'}}>
-                    <span className="voice-bar joshua1" />
-                    <span className="voice-bar joshua2" />
-                    <span className="voice-bar joshua3" />
-                    <span className="voice-bar joshua4" />
-                    <span className="voice-bar joshua5" />
-                  </span>
-                </>
-              )}
-              <button
-                onClick={() => {
-                  if (isActive) {
-                    setShowAgentSwitchHint('joshua')
-                  } else {
-                    setSelectedAgent('joshua')
-                  }
-                }}
-                className={`flex flex-col items-center focus:outline-none transition-all duration-200 relative z-10`}
-                aria-label="Joshua auswählen"
-                type="button"
-                style={{ background: 'none', border: 'none', padding: 0 }}
-                disabled={false}
-              >
-                <img
-                  src="/public-pics/joshua.jpg"
-                  alt="Joshua, Azubiberater"
-                  className={`object-cover shadow rounded-full border-4 border-[#028e4a] transition-all duration-300 relative ${selectedAgent === 'joshua' ? 'w-32 h-32 z-10' : 'w-20 h-20 opacity-60 grayscale'}`}
-                />
-                <span className="text-xs font-medium text-[#252422] mt-2">Joshua</span>
-              </button>
-              {/* Dezent eingeblendeter Hinweis nur einmal anzeigen */}
-              {showAgentSwitchHint === 'joshua' && isActive && (
-                <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-[#252422] text-white text-xs rounded-lg px-3 py-1 shadow-lg opacity-90 z-30 transition-all duration-200 whitespace-nowrap pointer-events-none">
-                  Du bist gerade im Gespräch. Bitte beende das aktuelle Gespräch, um den Assistenten zu wechseln.
-                </div>
-              )}
-            </div>
+          </div>
+        </div>
+        {/* Datenschutz-Checkbox kompakt und direkt unter den Agenten-Bildern, Abstand nach oben und unten optimiert */}
+        <div className="w-full flex justify-center items-center" style={{ marginTop: '-18px', marginBottom: '18px' }}>
+          <div className="flex items-center justify-center w-full max-w-[320px] mx-auto">
+            <input
+              id="privacy-check"
+              type="checkbox"
+              checked={privacyChecked}
+              onChange={e => {
+                setPrivacyChecked(e.target.checked);
+                if (!privacyAccepted) {
+                  setShowPrivacyModal(true);
+                }
+              }}
+              className="mr-1 accent-[#df242c] cursor-pointer"
+              style={{ width: '18px', height: '18px', minWidth: '18px', minHeight: '18px' }}
+              disabled={isActive}
+              tabIndex={0}
+            />
+            <label htmlFor="privacy-check" className="text-[11px] text-gray-700 select-none cursor-pointer" style={{lineHeight:1.1}}>
+              Ich akzeptiere die <span className="underline text-[#df242c] cursor-pointer" onClick={e => {e.preventDefault(); window.open('https://www.moelders.de/datenschutz', '_blank', 'noopener,noreferrer')}}>Datenschutzrichtlinie</span>
+            </label>
           </div>
         </div>
         {/* Gespräch starten Button + Status-Kreis exakt wie Chatfenster, Status-Kreis zentriert */}
@@ -397,7 +360,7 @@ export default function VoiceAssistant() {
                 whileTap={{ scale: 0.97 }}
                 onClick={isActive ? endConversation : startConversation}
                 className={`mb-2 pr-4 pl-6 py-2 rounded-2xl text-base font-semibold shadow-md transition-all duration-200 focus:outline-none flex-grow-0 flex-shrink-0 flex items-center justify-between relative w-full`
-                  + (isActive ? ' bg-gray-200 text-[#dd232d] hover:bg-gray-300' : selectedAgent === 'anna' ? ' bg-[#dd232d] text-white hover:bg-[#b81c24]' : ' bg-[#028e4a] text-white hover:bg-[#026c39]')
+                  + (isActive ? ' bg-gray-200 text-[#df242c] hover:bg-gray-300' : selectedAgent === 'anna' ? ' bg-[#df242c] text-white hover:bg-[#b81c24]' : ' bg-[#028e4a] text-white hover:bg-[#026c39]')
                   + (!privacyChecked && !isActive ? ' opacity-50 cursor-not-allowed' : '')}
                 aria-label={isActive ? 'Gespräch beenden' : 'Gespräch starten'}
                 disabled={!privacyChecked && !isActive}
@@ -410,15 +373,23 @@ export default function VoiceAssistant() {
                 <span
                   className="flex items-center justify-center ml-auto"
                   aria-label={connectionStatus === 'connected' ? 'Verbunden' : 'Nicht verbunden'}
-                  style={{height:'40px', width:'40px'}}
+                  style={{height:'40px', width:'40px', display:'flex', alignItems:'center', justifyContent:'center', marginLeft: 0}}
                 >
                   <span
-                    className={`block w-10 h-10 rounded-full border-4 ${connectionStatus === 'connected' ? 'border-white bg-green-600' : 'border-white bg-red-600'}`}
-                    style={{ boxShadow: '0 0 0 2px #fff', position: 'relative', display:'flex', alignItems:'center', justifyContent:'center' }}
+                    className={`block w-10 h-10 rounded-full border-4 ${connectionStatus === 'connected' ? 'border-white bg-green-600' : 'border-white bg-[#ededed]'}`}
+                    style={{ boxShadow: '0 0 0 2px #fff', position: 'relative', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto' }}
                   >
                     {connectionStatus === 'connected' && (
                       <svg viewBox="0 0 20 20" width="18" height="18" style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)'}} aria-hidden="true" focusable="false">
                         <polyline points="5,11 9,15 15,7" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    )}
+                    {connectionStatus !== 'connected' && (
+                      <svg viewBox="0 0 32 32" width="22" height="22" style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)'}} aria-hidden="true" focusable="false">
+                        {/* Drei unterschiedlich hohe, schwarze Balken, mittig */}
+                        <rect x="9" y="13" width="2.5" height="6" rx="1.2" fill="#222" />
+                        <rect x="15" y="9" width="2.5" height="14" rx="1.2" fill="#222" />
+                        <rect x="21" y="13" width="2.5" height="6" rx="1.2" fill="#222" />
                       </svg>
                     )}
                   </span>
@@ -427,40 +398,17 @@ export default function VoiceAssistant() {
             </div>
           </div>
         </div>
-        {/* Datenschutz-Checkbox kompakt und direkt unter dem Button, Abstand nach oben und unten optimiert */}
-        <div className="w-full flex justify-center items-center" style={{ marginTop: '-28px', marginBottom: '28px' }}>
-          <div className="flex items-center justify-center w-full max-w-[320px] mx-auto">
-            <input
-              id="privacy-check"
-              type="checkbox"
-              checked={privacyChecked}
-              onChange={e => {
-                setPrivacyChecked(e.target.checked);
-                if (!privacyAccepted) {
-                  setShowPrivacyModal(true);
-                }
-              }}
-              className="mr-1 accent-[#dd232d] cursor-pointer"
-              style={{ width: '18px', height: '18px', minWidth: '18px', minHeight: '18px' }}
-              disabled={isActive}
-              tabIndex={0}
-            />
-            <label htmlFor="privacy-check" className="text-[11px] text-gray-700 select-none cursor-pointer" style={{lineHeight:1.1}}>
-              Ich akzeptiere die <span className="underline text-[#dd232d] cursor-pointer" onClick={e => {e.preventDefault(); window.open('https://www.moelders.de/datenschutz', '_blank', 'noopener,noreferrer')}}>Datenschutzrichtlinie</span>
-            </label>
-          </div>
-        </div>
         {/* Zeige Chat Button: eigene Zeile, volle Breite, max wie Chatfenster */}
         <div className="flex w-full justify-center mb-2">
           <motion.button
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
             onClick={() => setShowChat(!showChat)}
-            className='w-full max-w-[420px] px-2 py-2 rounded-xl bg-gray-100 text-[#252422] text-xs font-semibold flex flex-row items-center justify-center shadow-sm border border-gray-200 hover:bg-gray-200 transition-colors h-11 mb-2'
+            className={`w-full max-w-[420px] px-2 py-2 rounded-xl bg-[#f0f0f0] text-[#252422] text-xs font-semibold flex flex-row items-center justify-center shadow-sm border border-gray-200 transition-colors h-11 mb-2 ${showChat ? 'bg-[#df242c] text-[#5d6669] border-[#df242c]' : 'hover:bg-[#df242c] hover:text-white hover:border-[#df242c]'}`}
             type="button"
             style={{lineHeight: 1.1}}
           >
-            <MessageCircle className='w-4 h-4 mr-2' />
+            <MessageCircle className={`w-4 h-4 mr-2${showChat ? ' text-[#5d6669]' : ''}`} />
             <span className='leading-tight'>{showChat ? 'Chat verbergen' : 'Zeige Chat'}</span>
           </motion.button>
         </div>
@@ -470,8 +418,8 @@ export default function VoiceAssistant() {
             <motion.button
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
-              onClick={() => window.location.href = 'mailto:personalabteilung@moelders.de'}
-              className='flex-1 px-2 py-1.5 rounded-xl bg-[#dd232d] text-white text-xs font-semibold flex flex-col items-center justify-center space-y-0.5 shadow-sm border border-[#dd232d] hover:bg-[#b81c24] transition-colors h-10 min-w-0'
+              onClick={() => window.location.href = 'mailto:azubianfragen@moelders.de'}
+              className={`flex-1 px-2 py-1.5 rounded-xl bg-[#f0f0f0] text-[#252422] text-xs font-semibold flex flex-col items-center justify-center space-y-0.5 shadow-sm border border-[#f0f0f0] transition-colors h-10 min-w-0 hover:bg-[#df242c] hover:text-white hover:border-[#df242c]`}
               type="button"
               style={{lineHeight: 1.1}}
             >
@@ -482,7 +430,7 @@ export default function VoiceAssistant() {
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
               onClick={() => window.open('https://wa.me/4915123206142', '_blank')}
-              className='flex-1 px-2 py-1.5 rounded-xl bg-[#25D366] text-white text-xs font-semibold flex flex-col items-center justify-center space-y-0.5 shadow-sm border border-[#25D366] hover:bg-[#1ebe57] transition-colors h-10 min-w-0'
+              className={`flex-1 px-2 py-1.5 rounded-xl bg-[#f0f0f0] text-[#252422] text-xs font-semibold flex flex-col items-center justify-center space-y-0.5 shadow-sm border border-[#f0f0f0] transition-colors h-10 min-w-0 hover:bg-[#df242c] hover:text-white hover:border-[#df242c]`}
               type="button"
               style={{lineHeight: 1.1}}
             >
@@ -494,12 +442,12 @@ export default function VoiceAssistant() {
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
               onClick={() => window.open('https://www.moelders.de/unternehmen/jobboerse', '_blank', 'noopener,noreferrer')}
-              className='flex-1 px-2 py-1.5 rounded-xl bg-[#252422] text-white text-xs font-semibold flex flex-col items-center justify-center space-y-0.5 shadow-sm border border-[#252422] hover:bg-[#444] transition-colors h-10 min-w-0'
+              className={`flex-1 px-2 py-1.5 rounded-xl bg-[#f0f0f0] text-[#252422] text-xs font-semibold flex flex-col items-center justify-center space-y-0.5 shadow-sm border border-[#f0f0f0] transition-colors h-10 min-w-0 hover:bg-[#df242c] hover:text-white hover:border-[#df242c]`}
               type="button"
               style={{lineHeight: 1.1}}
             >
               <Bot className='w-4 h-4 mb-0.5' />
-              <span className='leading-tight'>Stellen</span>
+              <span className='leading-tight'>Jobbörse</span>
             </motion.button>
           </div>
         )}
@@ -518,9 +466,9 @@ export default function VoiceAssistant() {
                 {/* Header mit Avatar und Status */}
                 <div className='flex items-center gap-2 px-4 pt-4 pb-1' style={{ background: '#f7f7f8', borderTopLeftRadius: '1rem', borderTopRightRadius: '1rem' }}>
                   <img
-                    src={selectedAgent === 'anna' ? '/public-pics/anna.jpg' : '/public-pics/joshua.jpg'}
-                    alt={selectedAgent === 'anna' ? 'Anna, Azubiberaterin' : 'Joshua, Azubiberater'}
-                    className='w-8 h-8 rounded-full border border-[#dd232d] object-cover shadow'
+                    src={'/public-pics/anna.jpg'}
+                    alt={'Anna, Azubiberaterin'}
+                    className='w-8 h-8 rounded-full border border-[#df242c] object-cover shadow'
                   />
                   <span className='text-gray-700 text-sm rounded-full px-3 py-0.5 font-medium'>Ich höre dir zu...</span>
                 </div>
@@ -540,15 +488,15 @@ export default function VoiceAssistant() {
                     >
                       {message.source !== 'user' && (
                         <img
-                          src={selectedAgent === 'anna' ? '/public-pics/anna.jpg' : '/public-pics/joshua.jpg'}
-                          alt={selectedAgent === 'anna' ? 'Anna, Azubiberaterin' : 'Joshua, Azubiberater'}
-                          className='w-7 h-7 rounded-full border border-[#dd232d] object-cover mr-2'
+                          src={'/public-pics/anna.jpg'}
+                          alt={'Anna, Azubiberaterin'}
+                          className='w-7 h-7 rounded-full border border-[#df242c] object-cover mr-2'
                         />
                       )}
                       <div
                         className={
                           message.source === 'user'
-                            ? 'bg-gradient-to-br from-[#dd232d] to-[#b81c24] text-white border border-[#dd232d] text-right px-5 py-2 max-w-[75%] shadow-lg relative user-bubble'
+                            ? 'bg-gradient-to-br from-[#df242c] to-[#b81c24] text-white border border-[#df242c] text-right px-5 py-2 max-w-[75%] shadow-lg relative user-bubble'
                             : 'bg-gradient-to-br from-gray-100 to-gray-200 text-[#252422] border border-gray-200 text-left px-5 py-2 max-w-[75%] shadow-lg relative agent-bubble'
                         }
                         style={{ fontSize: 13, lineHeight: 1.45, minWidth: 60, borderRadius: message.source === 'user' ? '18px 18px 4px 18px' : '18px 18px 18px 4px' }}
@@ -567,9 +515,9 @@ export default function VoiceAssistant() {
                   {pendingAgentMessage && (
                     <div className="flex justify-start items-end w-full">
                       <img
-                        src={selectedAgent === 'anna' ? '/public-pics/anna.jpg' : '/public-pics/joshua.jpg'}
-                        alt={selectedAgent === 'anna' ? 'Anna, Azubiberaterin' : 'Joshua, Azubiberater'}
-                        className='w-7 h-7 rounded-full border border-[#dd232d] object-cover mr-2'
+                        src={'/public-pics/anna.jpg'}
+                        alt={'Anna, Azubiberaterin'}
+                        className='w-7 h-7 rounded-full border border-[#df242c] object-cover mr-2'
                       />
                       <div className='bg-gradient-to-br from-gray-100 to-gray-200 text-[#252422] border border-gray-200 text-left px-5 py-2 max-w-[75%] shadow-lg relative agent-bubble flex items-center gap-2' style={{ fontSize: 13, lineHeight: 1.45, minWidth: 60, borderRadius: '18px 18px 18px 4px' }}>
                         <span className="flex flex-row gap-1 items-center" aria-label="Agent tippt">
@@ -588,8 +536,8 @@ export default function VoiceAssistant() {
                     <motion.button
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.97 }}
-                      onClick={() => window.location.href = 'mailto:personalabteilung@moelders.de'}
-                      className='flex-1 px-1.5 py-1 rounded-lg bg-[#dd232d] text-white text-[10px] font-semibold flex flex-col items-center justify-center shadow-sm border border-[#dd232d] hover:bg-[#b81c24] transition-colors h-8 min-w-0 text-center'
+                      onClick={() => window.location.href = 'mailto:azubianfragen@moelders.de'}
+                      className='flex-1 px-1.5 py-1 rounded-lg bg-[#f0f0f0] text-[#252422] text-[10px] font-semibold flex flex-col items-center justify-center shadow-sm border border-[#f0f0f0] transition-colors h-8 min-w-0 text-center hover:bg-[#df242c] hover:text-white hover:border-[#df242c]'
                       type="button"
                       style={{lineHeight: 1.1}}
                     >
@@ -600,7 +548,7 @@ export default function VoiceAssistant() {
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.97 }}
                       onClick={() => window.open('https://wa.me/4915123206142', '_blank')}
-                      className='flex-1 px-1.5 py-1 rounded-lg bg-[#25D366] text-white text-[10px] font-semibold flex flex-col items-center justify-center shadow-sm border border-[#25D366] hover:bg-[#1ebe57] transition-colors h-8 min-w-0 text-center'
+                      className='flex-1 px-1.5 py-1 rounded-lg bg-[#f0f0f0] text-[#252422] text-[10px] font-semibold flex flex-col items-center justify-center shadow-sm border border-[#f0f0f0] transition-colors h-8 min-w-0 text-center hover:bg-[#df242c] hover:text-white hover:border-[#df242c]'
                       type="button"
                       style={{lineHeight: 1.1}}
                     >
@@ -611,16 +559,16 @@ export default function VoiceAssistant() {
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.97 }}
                       onClick={() => window.open('https://www.moelders.de/unternehmen/jobboerse', '_blank', 'noopener,noreferrer')}
-                      className='flex-1 px-1.5 py-1 rounded-lg bg-[#252422] text-white text-[10px] font-semibold flex flex-col items-center justify-center shadow-sm border border-[#252422] hover:bg-[#444] transition-colors h-8 min-w-0 text-center'
+                      className='flex-1 px-1.5 py-1 rounded-lg bg-[#f0f0f0] text-[#252422] text-[10px] font-semibold flex flex-col items-center justify-center shadow-sm border border-[#f0f0f0] transition-colors h-8 min-w-0 text-center hover:bg-[#df242c] hover:text-white hover:border-[#df242c]'
                       type="button"
                       style={{lineHeight: 1.1}}
                     >
                       <Bot className='w-3.5 h-3.5 mb-0.5' />
-                      <span className='leading-tight'>Stellen</span>
+                      <span className='leading-tight'>Jobbörse</span>
                     </motion.button>
                   </div>
                   <button
-                    className='w-full mt-1 p-1.5 rounded-lg border border-[#dd232d] text-[#dd232d] hover:bg-[#dd232d] hover:text-white transition-colors flex items-center justify-center gap-1 text-xs min-w-0 h-8'
+                    className='w-full mt-1 p-1.5 rounded-lg border border-[#df242c] text-[#df242c] hover:bg-[#df242c] hover:text-white transition-colors flex items-center justify-center gap-1 text-xs min-w-0 h-8'
                     onClick={() => downloadTranscript(messages)}
                     aria-label='Chat herunterladen'
                     type='button'
@@ -684,12 +632,12 @@ export default function VoiceAssistant() {
               style={{background:'none',border:'none',padding:0,lineHeight:1}}
             >×</button>
             <div className="text-xs text-gray-800 mb-4 text-center leading-snug">
-              Mit dem Klick auf <b>„Zustimmen“</b> und bei jeder weiteren Interaktion mit diesem KI-Agenten erkläre ich mich damit einverstanden, dass meine Kommunikation aufgezeichnet, gespeichert und mit Drittanbietern geteilt wird – wie in der <a href="https://www.moelders.de/datenschutz" target="_blank" rel="noopener noreferrer" className="underline text-[#dd232d]">Datenschutzrichtlinie</a> beschrieben.<br /><br />
-              Wenn Sie nicht möchten, dass Ihre Gespräche aufgezeichnet werden, verzichten Sie bitte auf die Nutzung dieses Dienstes.
+              Mit dem Klick auf <b>„Zustimmen“</b> und bei jeder weiteren Interaktion mit diesem KI-Agenten erklärst <b>du</b> dich damit einverstanden, dass <b>deine</b> Kommunikation aufgezeichnet, gespeichert und mit Drittanbietern geteilt wird – wie in der <a href="https://www.moelders.de/datenschutz" target="_blank" rel="noopener noreferrer" className="underline text-[#df242c]">Datenschutzrichtlinie</a> beschrieben.<br /><br />
+              Wenn <b>du</b> nicht möchtest, dass <b>deine</b> Gespräche aufgezeichnet werden, verzichte bitte auf die Nutzung dieses Dienstes.
             </div>
             <div className="flex flex-row gap-3 w-full mt-2">
               <button
-                className="flex-1 px-3 py-1.5 rounded-lg bg-[#dd232d] text-white text-xs font-semibold hover:bg-[#b81c24] transition-colors"
+                className="flex-1 px-3 py-1.5 rounded-lg bg-[#df242c] text-white text-xs font-semibold hover:bg-[#b81c24] transition-colors"
                 onClick={() => {
                   setPrivacyAccepted(true);
                   setPrivacyChecked(true);
