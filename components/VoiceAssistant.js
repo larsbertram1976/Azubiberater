@@ -201,18 +201,19 @@ export default function VoiceAssistant() {
     }
   }, [showAgentSwitchHint])
 
+  // iFrame-Erkennung
+  const [isIframe, setIsIframe] = useState(false)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsIframe(window.self !== window.top)
+    }
+  }, [])
+
   return (
-    <div className='min-h-screen flex flex-col items-center justify-center bg-white p-4'>
-      <div className='w-full max-w-sm mx-auto flex flex-col items-center'>
-        {/* Firmenlogo oben auf der Seite - noch weiter nach oben */}
-        <div className="w-full flex justify-center mb-0" style={{ marginTop: '-32px', marginBottom: '-8px' }}>
-          <img
-            src="/public-pics/moelders-logo.png"
-            alt="Mölders Firmenlogo"
-            className="h-28 object-contain"
-            style={{ maxWidth: 600 }}
-          />
-        </div>
+    <div className={`min-h-screen flex flex-col items-center justify-center bg-white p-4${isIframe ? ' min-h-0 h-full' : ''}`}
+         style={isIframe ? { minHeight: '100vh', height: '100vh', padding: 0 } : {}}>
+      <div className={`w-full mx-auto flex flex-col items-center ${isIframe ? 'max-w-full' : 'max-w-sm'}`}
+           style={isIframe ? { maxWidth: '100vw' } : {}}>
         {/* Begrüßungstext und Einleitung */}
         <div className="w-full flex flex-col items-center text-center mb-3 px-2">
           <h2 className="text-lg font-semibold text-[#252422] mb-1">Willkommen beim Mölders Job & Azubiberater!</h2>
@@ -405,7 +406,7 @@ export default function VoiceAssistant() {
                 <span className="w-full text-center block" style={{marginRight: '40px'}}>
                   {isActive ? 'Gespräch beenden' : `Gespräch mit ${selectedAgent === 'anna' ? 'Anna' : 'Joshua'} starten`}
                 </span>
-                {/* Status-Kreis bündig am rechten Rand, IM Button, nicht absolut! */}
+                {/* Status-Kreis bündig am rechten Rand, IM BUTTON, NICHT ABSOLUT! */}
                 <span
                   className="flex items-center justify-center ml-auto"
                   aria-label={connectionStatus === 'connected' ? 'Verbunden' : 'Nicht verbunden'}
