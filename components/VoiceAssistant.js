@@ -35,6 +35,14 @@ export default function VoiceAssistant() {
   const scrollAreaRef = useRef(null)
   const recognitionRef = useRef(null)
 
+  // State für Audio-Feedback-Animation
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false)
+  const canvasRef = useRef(null)
+  const audioRef = useRef(null)
+  const analyserRef = useRef(null)
+  const animationFrameRef = useRef(null)
+  const [audioLevel, setAudioLevel] = useState(0)
+
   // SpeechRecognition initialisieren (nur einmal beim Mount)
   useEffect(() => {
     if (typeof window !== 'undefined' && ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
@@ -209,6 +217,91 @@ export default function VoiceAssistant() {
     }
   }, [])
 
+  // Audio-Feedback-Animation: Web Audio API + Canvas
+  useEffect(() => {
+    if (!isAudioPlaying || !audioRef.current) return
+    let ctx, analyser, src, dataArray, rafId
+    try {
+      ctx = new (window.AudioContext || window.webkitAudioContext)()
+      analyser = ctx.createAnalyser()
+      src = ctx.createMediaElementSource(audioRef.current)
+      src.connect(analyser)
+      analyser.connect(ctx.destination)
+      analyser.fftSize = 64
+      dataArray = new Uint8Array(analyser.frequencyBinCount)
+      analyserRef.current = analyser
+      function draw() {
+        analyser.getByteFrequencyData(dataArray)
+        const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length
+        setAudioLevel(avg)
+        const canvas = canvasRef.current
+        if (canvas) {
+          // Korrekt quadratisch, immer an der kleineren Kante orientieren
+          const size = Math.min(canvas.offsetWidth, canvas.offsetHeight)
+          canvas.width = size
+          canvas.height = size
+          const ctx2 = canvas.getContext('2d')
+          const w = size
+          const h = size
+          ctx2.clearRect(0, 0, w, h)
+          // Mittelpunkt exakt mittig
+          const cx = w/2
+          const cy = h/2
+          const maxR = w/2 * 0.98
+          const minR = w/2 * 0.7
+          const r = minR + (maxR-minR)*(avg/80)
+          for (let i = 3; i >= 1; i--) {
+            const factor = 1 + i*0.18 + 0.08*Math.sin(Date.now()/600 + i)
+            const r2 = r * factor
+            ctx2.beginPath()
+            ctx2.arc(cx, cy, r2, 0, 2*Math.PI)
+            ctx2.closePath()
+            ctx2.fillStyle = `rgba(223,36,44,${0.10/i})`
+            ctx2.shadowColor = '#df242c'
+            ctx2.shadowBlur = 18/i
+            ctx2.fill()
+          }
+          // Innerster, kräftiger Glow
+          const g = ctx2.createRadialGradient(cx, cy, minR*0.7, cx, cy, r)
+          g.addColorStop(0, 'rgba(223,36,44,0.18)')
+          g.addColorStop(0.6, 'rgba(223,36,44,0.10)')
+          g.addColorStop(1, 'rgba(223,36,44,0.01)')
+          ctx2.beginPath()
+          ctx2.arc(cx, cy, r, 0, 2*Math.PI)
+          ctx2.closePath()
+          ctx2.fillStyle = g
+          ctx2.shadowBlur = 0
+          ctx2.fill()
+        }
+        rafId = requestAnimationFrame(draw)
+        animationFrameRef.current = rafId
+      }
+      draw()
+    } catch(e) {}
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId)
+      if (ctx) ctx.close()
+      analyserRef.current = null
+    }
+  }, [isAudioPlaying])
+
+  // Audio-Element-Events verbinden
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!audio) return
+    const onPlay = () => setIsAudioPlaying(true)
+    const onPause = () => setIsAudioPlaying(false)
+    const onEnded = () => setIsAudioPlaying(false)
+    audio.addEventListener('play', onPlay)
+    audio.addEventListener('pause', onPause)
+    audio.addEventListener('ended', onEnded)
+    return () => {
+      audio.removeEventListener('play', onPlay)
+      audio.removeEventListener('pause', onPause)
+      audio.removeEventListener('ended', onEnded)
+    }
+  }, [])
+
   return (
     <div className={`min-h-screen flex flex-col items-center justify-center bg-white p-4${isIframe ? ' min-h-0 h-full' : ''}`}
          style={isIframe ? { minHeight: '100vh', height: '100vh', padding: 0 } : {}}>
@@ -244,9 +337,18 @@ export default function VoiceAssistant() {
             50% { transform: scale(1.13); opacity: 0.32; }
             100% { transform: scale(1); opacity: 0.18; }
           }
+          @keyframes profile-pulse {
+            0% { transform: scale(1); }
+            40% { transform: scale(1.045); }
+            60% { transform: scale(1.06); }
+            100% { transform: scale(1); }
+          }
           .animate-pulse-spin-slow { animation: pulse-spin-slow 2.5s linear infinite; }
           .animate-pulse-spin-rev { animation: pulse-spin-rev 2.2s linear infinite; }
           .animate-pulse-scale { animation: pulse-scale 2.8s ease-in-out infinite; }
+          .animate-profile-pulse {
+            animation: profile-pulse 1.6s cubic-bezier(0.4,0,0.2,1) infinite;
+          }
 
           /* Modern Voice Bars Animation */
           .voice-bars {
@@ -292,6 +394,28 @@ export default function VoiceAssistant() {
           <div className="flex flex-row items-center justify-center gap-8 relative">
             {/* Anna (einziger Agent) */}
             <div className="relative flex flex-col items-center justify-center" style={{minWidth: '8rem', minHeight: '8rem'}}>
+              {/* Canvas Glow Effekt */}
+              <canvas
+                ref={canvasRef}
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  top: 0,
+                  width: '100%',
+                  height: '100%',
+                  aspectRatio: '1/1',
+                  zIndex: 1,
+                  pointerEvents: 'none',
+                  borderRadius: '50%',
+                  opacity: isAudioPlaying ? 1 : 0,
+                  transition: 'opacity 0.3s',
+                }}
+                width={160}
+                height={160}
+                aria-hidden="true"
+              />
+              {/* Audio-Element (hidden, wird von SDK gesteuert) */}
+              <audio ref={audioRef} style={{display:'none'}} />
               {isSpeaking && (
                 <>
                   <span className="absolute inset-0 flex items-center justify-center z-0 pointer-events-none">
@@ -299,14 +423,7 @@ export default function VoiceAssistant() {
                     <span className="block w-40 h-40 rounded-full bg-gradient-to-br from-[#ff6f61] via-[#df242c] to-[#ffb199] opacity-20 animate-pulse-spin-rev blur-[6px]" style={{position:'absolute'}}></span>
                     <span className="block w-32 h-32 rounded-full bg-gradient-to-br from-[#ffb199] via-[#ff6f61] to-[#df242c] opacity-30 animate-pulse-scale blur-[8px]" style={{position:'absolute'}}></span>
                   </span>
-                  {/* Modern Voice Bars, leicht nach unten verschoben und immer zentriert */}
-                  <span className="voice-bars" style={{top: '62%', left: '50%', transform: 'translate(-50%, 0)'}}>
-                    <span className="voice-bar" />
-                    <span className="voice-bar" />
-                    <span className="voice-bar" />
-                    <span className="voice-bar" />
-                    <span className="voice-bar" />
-                  </span>
+                  {/* Vertikale Balken entfernt! */}
                 </>
               )}
               <button
@@ -320,7 +437,8 @@ export default function VoiceAssistant() {
                 <img
                   src="/public-pics/anna.jpg"
                   alt="Anna, Azubiberaterin"
-                  className={`object-cover shadow rounded-full border-4 border-[#df242c] transition-all duration-300 relative w-32 h-32 z-10`}
+                  className={`object-cover shadow rounded-full border-4 border-[#df242c] transition-all duration-300 relative w-36 h-36 z-10${isSpeaking ? ' animate-profile-pulse' : ''}`}
+                  style={{willChange: 'transform'}}
                 />
                 <span className="text-xs font-medium text-[#252422] mt-2">Anna</span>
               </button>
@@ -490,18 +608,72 @@ export default function VoiceAssistant() {
                         <img
                           src={'/public-pics/anna.jpg'}
                           alt={'Anna, Azubiberaterin'}
-                          className='w-7 h-7 rounded-full border border-[#df242c] object-cover mr-2'
+                          className='w-9 h-9 rounded-full border border-[#df242c] object-cover shadow'
                         />
                       )}
                       <div
                         className={
                           message.source === 'user'
-                            ? 'bg-gradient-to-br from-[#df242c] to-[#b81c24] text-white border border-[#df242c] text-right px-5 py-2 max-w-[75%] shadow-lg relative user-bubble'
-                            : 'bg-gradient-to-br from-gray-100 to-gray-200 text-[#252422] border border-gray-200 text-left px-5 py-2 max-w-[75%] shadow-lg relative agent-bubble'
+                            ? 'bg-gradient-to-br from-[#df242c] to-[#b81c24] text-white border border-[#df242c] text-right px-5 py-2 max-w-[75%] shadow-lg relative user-bubble break-words'
+                            : 'bg-gradient-to-br from-gray-100 to-gray-200 text-[#252422] border border-gray-200 text-left px-5 py-2 max-w-[75%] shadow-lg relative agent-bubble break-words'
                         }
-                        style={{ fontSize: 13, lineHeight: 1.45, minWidth: 60, borderRadius: message.source === 'user' ? '18px 18px 4px 18px' : '18px 18px 18px 4px' }}
+                        style={{ fontSize: 13, lineHeight: 1.45, minWidth: 60, borderRadius: message.source === 'user' ? '18px 18px 4px 18px' : '18px 18px 18px 4px', wordBreak: 'break-word', overflowWrap: 'anywhere' }}
                       >
-                        {message.message}
+                        {/* URLs im Text automatisch verlinken, Zeilenumbrüche erhalten, Punkt/Komma am Ende nicht Teil des Links, Links immer eigene Zeile */}
+                        {(() => {
+                          const urlRegex = /((https?:\/\/|www\.)[\w\-]+(\.[\w\-]+)+(\/[\w\-.,@?^=%&:/~+#]*)?(#[\w\-]+)?)/gi;
+                          // Splitte an URLs, aber behalte die Reihenfolge
+                          const parts = [];
+                          let lastIndex = 0;
+                          let match;
+                          while ((match = urlRegex.exec(message.message)) !== null) {
+                            // Text vor der URL
+                            if (match.index > lastIndex) {
+                              parts.push({ text: message.message.slice(lastIndex, match.index), isLink: false });
+                            }
+                            let url = match[0];
+                            // Entferne Punkt, Komma, Semikolon, Doppelpunkt am Ende
+                            let trailing = '';
+                            while (/[.,;:!?)]$/.test(url)) {
+                              trailing = url.slice(-1) + trailing;
+                              url = url.slice(0, -1);
+                            }
+                            let href = url;
+                            if (!/^https?:\/\//i.test(href)) href = 'https://' + href;
+                            // Nur Links mit mindestens einem Punkt und ohne offensichtliche Fehler
+                            if (/^https?:\/\/\.[a-zA-Z]/.test(url) || /\s/.test(url)) {
+                              // Kein echter Link
+                              parts.push({ text: match[0], isLink: false });
+                            } else {
+                              // Link immer in eigener Zeile mit <br /> davor und danach
+                              parts.push({ text: url, isLink: true, href, trailing });
+                            }
+                            lastIndex = match.index + match[0].length;
+                          }
+                          // Restlicher Text nach der letzten URL
+                          if (lastIndex < message.message.length) {
+                            parts.push({ text: message.message.slice(lastIndex), isLink: false });
+                          }
+                          // Baue JSX mit Zeilenumbrüchen und Links in eigener Zeile
+                          const jsx = [];
+                          parts.forEach((part, i) => {
+                            if (part.isLink) {
+                              jsx.push(<br key={`br-before-${i}`} />);
+                              jsx.push(
+                                <a key={i} href={part.href} target="_blank" rel="noopener noreferrer" className="underline text-[#df242c] break-all hover:text-[#b81c24]" style={{wordBreak:'break-all', display:'inline-block'}}>{part.text}</a>
+                              );
+                              jsx.push(<br key={`br-after-${i}`} />);
+                              if (part.trailing) jsx.push(<span key={`trail-${i}`}>{part.trailing}</span>);
+                            } else {
+                              // Zeilenumbrüche im normalen Text erhalten
+                              part.text.split(/(\n)/).forEach((t, j) => {
+                                if (t === '\n') jsx.push(<br key={`nl-${i}-${j}`} />);
+                                else if (t) jsx.push(<span key={`txt-${i}-${j}`}>{t}</span>);
+                              });
+                            }
+                          });
+                          return jsx;
+                        })()}
                         {/* Sprechblasen-Pfeil wie im Beispielbild */}
                         {message.source === 'user' ? (
                           <span style={{ position: 'absolute', right: -8, bottom: 0, width: 0, height: 0, borderTop: '10px solid transparent', borderBottom: '10px solid transparent', borderLeft: '12px solid #b81c24' }} />
@@ -517,7 +689,7 @@ export default function VoiceAssistant() {
                       <img
                         src={'/public-pics/anna.jpg'}
                         alt={'Anna, Azubiberaterin'}
-                        className='w-7 h-7 rounded-full border border-[#df242c] object-cover mr-2'
+                        className='w-8 h-8 rounded-full border border-[#df242c] object-cover mr-2'
                       />
                       <div className='bg-gradient-to-br from-gray-100 to-gray-200 text-[#252422] border border-gray-200 text-left px-5 py-2 max-w-[75%] shadow-lg relative agent-bubble flex items-center gap-2' style={{ fontSize: 13, lineHeight: 1.45, minWidth: 60, borderRadius: '18px 18px 18px 4px' }}>
                         <span className="flex flex-row gap-1 items-center" aria-label="Agent tippt">
