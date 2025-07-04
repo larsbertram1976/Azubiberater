@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Mic, MicOff, MessageCircle, Bot, User, Download, Mail } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { downloadTranscript } from '@/utils/transcript'
-import { Conversation } from '@11labs/client'
+import { Conversation } from '@elevenlabs/client'
 import { getSignedUrl } from '@/app/actions/getSignedUrl'
 import getConfig from 'next/config'
 
@@ -42,6 +42,8 @@ export default function VoiceAssistant() {
   const analyserRef = useRef(null)
   const animationFrameRef = useRef(null)
   const [audioLevel, setAudioLevel] = useState(0)
+  const [signedUrl, setSignedUrl] = useState(null)
+  const [conversationId, setConversationId] = useState(null) // State für conversationId
 
   // SpeechRecognition initialisieren (nur einmal beim Mount)
   useEffect(() => {
@@ -113,9 +115,16 @@ export default function VoiceAssistant() {
         setConnectionStatus('disconnected')
         return
       }
+      setSignedUrl(signedUrl); // Save for REST fallback
+      console.log('[DEBUG] Starte Conversation mit signedUrl:', signedUrl)
       const conv = await Conversation.startSession({
         signedUrl,
+        input_mode: "text",
+        conversation_config_override: {
+          conversation: { text_only: true }
+        },
         onMessage: (message) => {
+          console.log('[DEBUG] onMessage empfangen:', message)
           setMessages((prev) => [
             ...prev,
             {
@@ -126,19 +135,39 @@ export default function VoiceAssistant() {
           if (message.source !== 'user') setPendingAgentMessage(false)
         },
         onError: (error) => {
+          console.error('[DEBUG] Agentenfehler:', error)
           alert('Agentenfehler: ' + error.message)
           setConnectionStatus('disconnected')
         },
         onStatusChange: (status) => {
+          console.log('[DEBUG] Statuswechsel:', status)
           setConnectionStatus(
             status.status === 'connected' ? 'connected' : 'disconnected'
           )
         },
         onModeChange: (mode) => {
+          console.log('[DEBUG] Modewechsel:', mode)
           setIsSpeaking(mode.mode === 'speaking')
           if (mode.mode === 'speaking') setPendingAgentMessage(true)
         },
       })
+      // Store conversationId from SDK instance if available
+      let cid = null;
+      if (conv) {
+        if (conv.conversationId) cid = conv.conversationId;
+        else if (conv.id) cid = conv.id;
+        else if (conv.connection && conv.connection.conversationId) cid = conv.connection.conversationId;
+        else if (conv.connection && conv.connection.conversation_id) cid = conv.connection.conversation_id;
+      }
+      console.log('[DEBUG] Conversation-Objekt:', conv);
+      console.log('[DEBUG] Erkannte conversationId:', cid);
+      if (cid) {
+        setConversationId(cid);
+      } else {
+        setConversationId(null);
+        console.warn('[DEBUG] Keine conversationId im Conversation-Objekt gefunden:', conv)
+      }
+      console.log('[DEBUG] Conversation-Instanz nach Start:', conv)
       setConversation(conv)
       setIsActive(true)
       setConnectionStatus('connected')
@@ -167,27 +196,124 @@ export default function VoiceAssistant() {
     }
   }
 
-  // Text abschicken (an Agenten senden) – SDK-konform, ohne Status-Check und Fehlerausgabe
+  // Text abschicken (an Agenten senden) – REST-konform für ElevenLabs Conversational API
   const handleSend = async () => {
     const text = inputValue.trim();
-    if (!text || !conversation) return;
+    if (!text || !conversation || connectionStatus !== 'connected') {
+      console.warn('[DEBUG] handleSend: Kein Text, keine Conversation oder nicht verbunden', {text, conversation, connectionStatus});
+      return;
+    }
     setMessages((prev) => [
       ...prev,
       { source: "user", message: text },
     ]);
     setInputValue("");
+    let sent = false;
     try {
-      if (typeof conversation.input === 'function') {
-        if (connectionStatus !== 'connected') {
-          // Agent nicht verbunden, Textinput wird ignoriert!
+      if (conversation.mode) {
+        console.log('[DEBUG] Aktueller Conversation-Modus vor Senden:', conversation.mode)
+      }
+      if (typeof conversation.setMode === 'function') {
+        try {
+          await conversation.setMode('text')
+          console.log('[DEBUG] setMode("text") erfolgreich ausgeführt')
+        } catch (errSetMode) {
+          console.warn('[DEBUG] setMode("text") fehlgeschlagen:', errSetMode)
+        }
+      } else if (typeof conversation.startTextInput === 'function') {
+        try {
+          await conversation.startTextInput()
+          console.log('[DEBUG] startTextInput() erfolgreich ausgeführt')
+        } catch (errStartText) {
+          console.warn('[DEBUG] startTextInput() fehlgeschlagen:', errStartText)
+        }
+      }
+      if (conversation.mode) {
+        console.log('[DEBUG] Aktueller Conversation-Modus nach Umschalten:', conversation.mode)
+      }
+      if (typeof conversation.send === 'function') {
+        console.log('[DEBUG] Sende Text an Agent (input):', text, conversation);
+        // Zuerst mit { input: text }
+        try {
+          console.log('[DEBUG] Warte auf conversation.send({ input })...')
+          const sendResult = await conversation.send({ input: text });
+          sent = true;
+          console.log('[DEBUG] conversation.send({ input }) erfolgreich', sendResult);
+        } catch (err1) {
+          console.warn('[DEBUG] conversation.send({ input }) fehlgeschlagen', err1);
+          // Falls das nicht klappt, versuche { text: text }
+          try {
+            console.log('[DEBUG] Versuche Fallback mit { text }:', text);
+            console.log('[DEBUG] Warte auf conversation.send({ text })...')
+            const sendResult2 = await conversation.send({ text });
+            sent = true;
+            console.log('[DEBUG] conversation.send({ text }) erfolgreich', sendResult2);
+          } catch (err2) {
+            console.error('[DEBUG] conversation.send({ text }) fehlgeschlagen', err2);
+            alert('Fehler: Die Nachricht konnte nicht an den Agenten gesendet werden.');
+          }
+        }
+      } else if (signedUrl) {
+        // REST fallback for text-only mode
+        if (!conversationId) {
+          setMessages((prev) => [
+            ...prev,
+            { source: 'agent', message: '[Fehler: conversation_id nicht verfügbar]' },
+          ]);
+          setPendingAgentMessage(false);
           return;
         }
-        await conversation.input({ text });
+        // Build correct REST endpoint
+        const restUrl = `https://api.elevenlabs.io/v1/convai/conversation/${conversationId}/interact`;
+        console.log('[DEBUG] REST-Fallback: Sende Text an REST-Endpoint:', restUrl, text);
+        setPendingAgentMessage(true);
+        try {
+          const response = await fetch(restUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'xi-api-key': process.env.NEXT_PUBLIC_ELEVEN_LABS_API_KEY || process.env.ELEVEN_LABS_API_KEY || '',
+            },
+            body: JSON.stringify({ input: text })
+          });
+          if (!response.ok) {
+            throw new Error('REST-Fallback: Antwort nicht OK: ' + response.status);
+          }
+          const data = await response.json();
+          console.log('[DEBUG] REST-Fallback: Antwort erhalten:', data);
+          // Add agent response to chat
+          if (data && data.response) {
+            setMessages((prev) => [
+              ...prev,
+              { source: 'agent', message: data.response },
+            ]);
+          } else if (data && data.message) {
+            setMessages((prev) => [
+              ...prev,
+              { source: 'agent', message: data.message },
+            ]);
+          } else {
+            setMessages((prev) => [
+              ...prev,
+              { source: 'agent', message: '[Agenten-Antwort nicht lesbar]' },
+            ]);
+          }
+          setPendingAgentMessage(false);
+        } catch (errRest) {
+          setPendingAgentMessage(false);
+          console.error('[DEBUG] REST-Fallback Fehler:', errRest);
+          setMessages((prev) => [
+            ...prev,
+            { source: 'agent', message: '[Fehler bei der Agenten-Antwort]' },
+          ]);
+        }
       } else {
-        // conversation.input ist keine Funktion! Conversation: conversation
+        console.error('[DEBUG] conversation.send ist keine Funktion und kein signedUrl!', conversation)
       }
     } catch (err) {
       // Fehler beim Senden an das SDK: err
+      console.error('[DEBUG] Fehler beim Senden an den Agenten:', err);
+      alert('Fehler beim Senden an den Agenten: ' + (err?.message || err));
     }
   };
 
@@ -304,9 +430,9 @@ export default function VoiceAssistant() {
 
   return (
     <div className={`min-h-screen flex flex-col items-center justify-center bg-white p-4${isIframe ? ' min-h-0 h-full' : ''}`}
-         style={isIframe ? { minHeight: '100vh', height: '100vh', padding: 0 } : {}}>
+         style={isIframe ? { minHeight: '100vh', height: '100vh', padding: 0 } : { paddingLeft: 16, paddingRight: 16, minHeight: '100vh' }}>
       <div className={`w-full mx-auto flex flex-col items-center ${isIframe ? 'max-w-full' : 'max-w-sm'}`}
-           style={isIframe ? { maxWidth: '100vw' } : {}}>
+           style={isIframe ? { maxWidth: '100vw' } : { maxWidth: 420, width: '100%' }}>
         {/* Begrüßungstext und Einleitung */}
         <div className="w-full flex flex-col items-center text-center mb-3 px-2">
           <h2 className="text-lg font-semibold text-[#252422] mb-1">Willkommen beim Job & Azubiberater!</h2>
@@ -536,7 +662,7 @@ export default function VoiceAssistant() {
             <motion.button
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
-              onClick={() => window.location.href = 'mailto:azubianfragen@moelders.de'}
+              onClick={() => window.location.href = 'mailto:azubianfragen@moelders.de?subject=Anfrage%20%C3%BCber%20KI%20Anna%20zu%20Jobs%2C%20Ausbildung%20und%20Praktika'}
               className={`flex-1 px-2 py-1.5 rounded-xl bg-[#f0f0f0] text-[#252422] text-xs font-semibold flex flex-col items-center justify-center space-y-0.5 shadow-sm border border-[#f0f0f0] transition-colors h-10 min-w-0 hover:bg-[#df242c] hover:text-white hover:border-[#df242c]`}
               type="button"
               style={{lineHeight: 1.1}}
@@ -702,13 +828,37 @@ export default function VoiceAssistant() {
                     </div>
                   )}
                 </div>
+                {/* Texteingabe und Senden-Button entfernt (keine Texteingabe mehr möglich) */}
+                {/* <form>
+                  className="flex flex-row items-center gap-2 px-4 pt-2 pb-1 border-t border-[#eee] bg-white"
+                  style={{marginTop:0}}
+                  onSubmit={e => {
+                    e.preventDefault();
+                    handleSend();
+                  }}
+                >
+                  <input
+                    type="text"
+                    value={inputValue}
+                    onChange={e => setInputValue(e.target.value)}
+                    placeholder="Nachricht eingeben..."
+                    className="flex-1 rounded-lg border border-[#df242c] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#df242c] bg-white shadow-sm"
+                    disabled={!conversation || connectionStatus !== 'connected'}
+                    autoComplete="off"
+                  />
+                  <button
+                    type="submit"
+                    className="px-4 py-2 rounded-lg bg-[#df242c] text-white font-semibold text-sm shadow hover:bg-[#b81c24] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={!inputValue.trim() || !conversation || connectionStatus !== 'connected'}
+                  >Senden</button>
+                </form> */}
                 {/* Footer: Kompakte Action Buttons in einer Zeile, darunter Download-Button über die ganze Breite */}
                 <div className='flex flex-col gap-2 px-4 pb-3 pt-1 border-t border-[#eee] bg-white'>
                   <div className='flex flex-row justify-between items-center gap-2 w-full mb-1'>
                     <motion.button
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.97 }}
-                      onClick={() => window.location.href = 'mailto:azubianfragen@moelders.de'}
+                      onClick={() => window.location.href = 'mailto:azubianfragen@moelders.de?subject=Anfrage%20%C3%BCber%20KI%20Anna%20zu%20Jobs%2C%20Ausbildung%20und%20Praktika'}
                       className='flex-1 px-1.5 py-1 rounded-lg bg-[#f0f0f0] text-[#252422] text-[10px] font-semibold flex flex-col items-center justify-center shadow-sm border border-[#f0f0f0] transition-colors h-8 min-w-0 text-center hover:bg-[#df242c] hover:text-white hover:border-[#df242c]'
                       type="button"
                       style={{lineHeight: 1.1}}
