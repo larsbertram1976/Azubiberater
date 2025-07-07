@@ -417,35 +417,32 @@ export default function VoiceAssistant() {
 
   // --- Hilfskomponente für Aktionsbuttons (E-Mail, WhatsApp, Jobbörse) ---
   function ActionButtons({ size = 'sm' }) {
-    // Responsive Button-Width: sm = kompakt (Footer), md = groß (unter Zeige Chat)
+    // Noch kompakter: kleinere Höhe, kleinere Schrift, kleinere Icons
     const base = size === 'sm'
-      ? 'flex-shrink-0 whitespace-nowrap min-w-[110px] max-w-[160px] rounded-2xl px-2 py-1.5 text-xs'
-      : 'flex-shrink-0 whitespace-nowrap min-w-[130px] max-w-[200px] rounded-2xl px-4 py-2 text-sm';
-    return useMemo(() => (
+      ? 'flex flex-row items-center justify-center flex-1 min-w-0 px-1 py-1 text-[11px] font-normal rounded-2xl h-8 whitespace-nowrap gap-1'
+      : 'flex flex-row items-center justify-center w-1/3 min-w-0 px-2 py-2 text-xs font-normal rounded-2xl h-9 whitespace-nowrap gap-1.5';
+    return (
       <>
         <a href={MAIL_URL} target="_blank" rel="noopener noreferrer"
-          className={`${base} bg-[#ededed] text-[#252422] shadow hover:bg-[#df242c] hover:text-white text-center transition-colors flex items-center justify-center`}>
-          <Mail className="inline-block w-4 h-4 mr-1 -mt-0.5 align-middle" strokeWidth={2} /> E-Mail
+          className={`${base} bg-[#ededed] text-[#252422] shadow hover:bg-[#df242c] hover:text-white text-center transition-colors mx-0.5`}
+          style={{lineHeight:'1.1'}}>
+          <Mail className="w-[13px] h-[13px]" strokeWidth={1.5} />
+          <span className="leading-none">E-Mail</span>
         </a>
         <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer"
-          className={`${base} bg-[#ededed] text-[#252422] shadow hover:bg-[#df242c] hover:text-white text-center transition-colors flex items-center justify-center`}>
-          <svg viewBox="0 0 32 32" width="16" height="16" className="inline-block mr-1 -mt-0.5 align-middle" fill="none" stroke="#25D366" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="16" cy="16" r="14" fill="#fff" stroke="#25D366" strokeWidth="2"/>
-            <path d="M10.5 13.5c.5 2 2.5 4.5 5 5.5m0 0c.5.5 1.5 1 2 1m-2-1c.5-.5 1.5-1.5 2-2m-2 2c-1.5-1-3-3-3.5-4.5" stroke="#25D366"/>
-          </svg>
-          WhatsApp
+          className={`${base} bg-[#ededed] text-[#252422] shadow hover:bg-[#df242c] hover:text-white text-center transition-colors mx-0.5`}
+          style={{lineHeight:'1.1'}}>
+          <svg viewBox="0 0 32 32" width="13" height="13" fill="none" stroke="#25D366" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="inline-block align-middle"><circle cx="16" cy="16" r="14" fill="#fff" stroke="#25D366" strokeWidth="1.5"/><path d="M10.5 13.5c.5 2 2.5 4.5 5 5.5m0 0c.5.5 1.5 1 2 1m-2-1c.5-.5 1.5-1.5 2-2m-2 2c-1.5-1-3-3-3.5-4.5" stroke="#25D366"/></svg>
+          <span className="leading-none">WhatsApp</span>
         </a>
         <a href={JOB_URL} target="_blank" rel="noopener noreferrer"
-          className={`${base} bg-[#ededed] text-[#252422] shadow hover:bg-[#df242c] hover:text-white text-center transition-colors flex items-center justify-center`}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="inline-block mr-1 -mt-0.5 align-middle" stroke="#252422" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="7" width="18" height="13" rx="2.5" fill="#fff"/>
-            <path d="M16 7V5a4 4 0 0 0-8 0v2"/>
-            <path d="M3 12h18"/>
-          </svg>
-          Jobbörse
+          className={`${base} bg-[#ededed] text-[#252422] shadow hover:bg-[#df242c] hover:text-white text-center transition-colors mx-0.5`}
+          style={{lineHeight:'1.1'}}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#252422" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" className="inline-block align-middle"><rect x="3" y="7" width="18" height="13" rx="2.5" fill="#fff"/><path d="M16 7V5a4 4 0 0 0-8 0v2"/><path d="M3 12h18"/></svg>
+          <span className="leading-none">Jobbörse</span>
         </a>
       </>
-    ), [base]);
+    );
   }
 
   return (
@@ -456,20 +453,12 @@ export default function VoiceAssistant() {
         {/* Begrüßungstext und Einleitung */}
         <div className="w-full flex flex-col items-center text-center mb-3 px-2">
           <h2 className="text-lg font-semibold text-[#252422] mb-1">Willkommen beim Job & Azubiberater!</h2>
-          <p className="text-sm text-gray-700 max-w-md leading-snug mb-2">
-            Du interessierst dich für eine Ausbildung, einen Job oder möchtest mehr über Mölders als Arbeitgeber erfahren?
+          <p className="text-sm text-gray-700 max-w-md leading-snug mb-2" style={{textJustify:'inter-word'}}>
+            <b>Anna</b> beantwortet dir alle Fragen rund um Jobs, Ausbildung und Bewerbung bei Mölders – persönlich, unkompliziert und direkt.
           </p>
-          <p className="text-sm text-gray-700 max-w-md leading-snug mb-2">
-            <b>Anna</b> beantwortet dir alle Fragen rund um offene Stellen, den Bewerbungsprozess und unsere Ausbildungsangebote – persönlich, unkompliziert und direkt.
-          </p>
-          <div className="w-full flex flex-col items-center gap-1 mt-2">
-            <span className="text-sm text-gray-700 max-w-md leading-snug">
-              Starte jetzt das Gespräch oder nutze die Kontaktmöglichkeiten unten.
-            </span>
-            <span className="text-sm text-gray-700 max-w-md leading-snug">
-              Wir freuen uns auf deine Nachricht!
-            </span>
-          </div>
+          <span className="text-sm text-gray-700 max-w-md leading-snug mb-1">
+            Starte das Gespräch oder nutze die Kontaktmöglichkeiten unten.
+          </span>
         </div>
         {/* Agenten-Auswahl: Anna oder Joshua */}
         <style jsx global>{`
@@ -763,7 +752,7 @@ export default function VoiceAssistant() {
             </button>
             {/* Aktionsbuttons: nur im zugeklappten Modus unter dem Button sichtbar */}
             {!showChat && (
-              <div className="w-full flex flex-row items-center justify-between gap-2 mt-2 max-w-[420px] overflow-x-auto scrollbar-none pb-1" style={{WebkitOverflowScrolling:'touch'}}>
+              <div className="w-full flex flex-row items-center justify-between mt-2 max-w-[420px] gap-2">
                 <ActionButtons size="md" />
               </div>
             )}
@@ -832,7 +821,7 @@ export default function VoiceAssistant() {
               </div>
               {/* Aktionsbuttons: im ausgeklappten Modus verkleinert im Footerbereich */}
               {showChat && (
-                <div className="w-full flex flex-row items-center justify-between gap-2 mt-1 pb-1 pt-2 border-t border-gray-100 overflow-x-auto scrollbar-none" style={{WebkitOverflowScrolling:'touch'}}>
+                <div className="w-full flex flex-row items-center justify-center mt-1 pb-1 pt-2 border-t border-gray-100 gap-1">
                   <ActionButtons size="sm" />
                 </div>
               )}
