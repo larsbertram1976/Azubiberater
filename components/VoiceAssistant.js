@@ -1,7 +1,7 @@
 // components/VoiceAssistant.jsx
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Mic, MicOff, MessageCircle, Bot, User, Download, Mail } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -18,6 +18,11 @@ const AGENT_IDS = {
 }
 
 let recognitionGlobal = null // global fallback for SpeechRecognition
+
+// --- Konstanten für Kontakt-Links ---
+const MAIL_URL = "mailto:azubianfragen@moelders.de?subject=Anfrage%20Azubiberatung";
+const WHATSAPP_URL = "https://wa.me/4915123456789";
+const JOB_URL = "https://www.moelders.de/unternehmen/jobboerse";
 
 export default function VoiceAssistant() {
   const [conversation, setConversation] = useState(null)
@@ -44,6 +49,7 @@ export default function VoiceAssistant() {
   const [audioLevel, setAudioLevel] = useState(0)
   const [signedUrl, setSignedUrl] = useState(null)
   const [conversationId, setConversationId] = useState(null) // State für conversationId
+  const [isMuted, setIsMuted] = useState(false) // State für Mikrofon-Stummschaltung
 
   // SpeechRecognition initialisieren (nur einmal beim Mount)
   useEffect(() => {
@@ -104,7 +110,7 @@ export default function VoiceAssistant() {
   }, [isActive])
 
   // Initialisiere Conversation
-  const startConversation = async () => {
+  const startConversation = useCallback(async () => {
     try {
       setConnectionStatus('connecting')
       // Agenten-ID je nach Auswahl
@@ -117,12 +123,18 @@ export default function VoiceAssistant() {
       }
       setSignedUrl(signedUrl); // Save for REST fallback
       console.log('[DEBUG] Starte Conversation mit signedUrl:', signedUrl)
-      const conv = await Conversation.startSession({
+
+      // Determine if agent is text-only (future: dynamic, for now hardcoded)
+      const isTextOnlyAgent = false; // Set to true if you have a text-only agent
+
+      // Only set text_only if agent is truly text-only
+      const sessionOptions = {
         signedUrl,
-        input_mode: "text",
-        conversation_config_override: {
-          conversation: { text_only: true }
-        },
+        // input_mode: isTextOnlyAgent ? 'text' : undefined, // Let SDK default for both
+        ...(isTextOnlyAgent ? {
+          input_mode: 'text',
+          conversation_config_override: { conversation: { text_only: true } }
+        } : {}),
         onMessage: (message) => {
           console.log('[DEBUG] onMessage empfangen:', message)
           setMessages((prev) => [
@@ -146,11 +158,19 @@ export default function VoiceAssistant() {
           )
         },
         onModeChange: (mode) => {
-          console.log('[DEBUG] Modewechsel:', mode)
-          setIsSpeaking(mode.mode === 'speaking')
-          if (mode.mode === 'speaking') setPendingAgentMessage(true)
+          // Robust debug output for troubleshooting
+          console.log('[DEBUG] onModeChange event received:', mode);
+          // Defensive: handle both string and object
+          let modeValue = mode && typeof mode === 'object' ? mode.mode : mode;
+          if (modeValue === 'speaking') {
+            setIsSpeaking(true);
+            setPendingAgentMessage(true);
+          } else {
+            setIsSpeaking(false);
+          }
         },
-      })
+      }
+      const conv = await Conversation.startSession(sessionOptions)
       // Store conversationId from SDK instance if available
       let cid = null;
       if (conv) {
@@ -167,7 +187,6 @@ export default function VoiceAssistant() {
         setConversationId(null);
         console.warn('[DEBUG] Keine conversationId im Conversation-Objekt gefunden:', conv)
       }
-      console.log('[DEBUG] Conversation-Instanz nach Start:', conv)
       setConversation(conv)
       setIsActive(true)
       setConnectionStatus('connected')
@@ -178,10 +197,10 @@ export default function VoiceAssistant() {
       console.error('Failed to start conversation:', error)
       setConnectionStatus('disconnected')
     }
-  }
+  }, [selectedAgent])
 
   // Beende Conversation und Recognition
-  const endConversation = async () => {
+  const endConversation = useCallback(async () => {
     if (conversation) {
       await conversation.endSession()
       setConversation(null)
@@ -194,10 +213,10 @@ export default function VoiceAssistant() {
       recognitionRef.current = null
       recognitionGlobal = null
     }
-  }
+  }, [conversation])
 
-  // Text abschicken (an Agenten senden) – REST-konform für ElevenLabs Conversational API
-  const handleSend = async () => {
+  // Text abschicken (an Agenten senden) – gemäß ElevenLabs Conversational API
+  const handleSend = useCallback(async () => {
     const text = inputValue.trim();
     if (!text || !conversation || connectionStatus !== 'connected') {
       console.warn('[DEBUG] handleSend: Kein Text, keine Conversation oder nicht verbunden', {text, conversation, connectionStatus});
@@ -208,67 +227,27 @@ export default function VoiceAssistant() {
       { source: "user", message: text },
     ]);
     setInputValue("");
-    let sent = false;
+    setPendingAgentMessage(true);
     try {
-      if (conversation.mode) {
-        console.log('[DEBUG] Aktueller Conversation-Modus vor Senden:', conversation.mode)
-      }
-      if (typeof conversation.setMode === 'function') {
-        try {
-          await conversation.setMode('text')
-          console.log('[DEBUG] setMode("text") erfolgreich ausgeführt')
-        } catch (errSetMode) {
-          console.warn('[DEBUG] setMode("text") fehlgeschlagen:', errSetMode)
-        }
-      } else if (typeof conversation.startTextInput === 'function') {
-        try {
-          await conversation.startTextInput()
-          console.log('[DEBUG] startTextInput() erfolgreich ausgeführt')
-        } catch (errStartText) {
-          console.warn('[DEBUG] startTextInput() fehlgeschlagen:', errStartText)
-        }
-      }
-      if (conversation.mode) {
-        console.log('[DEBUG] Aktueller Conversation-Modus nach Umschalten:', conversation.mode)
-      }
+      // Versuche immer zuerst das SDK (Conversation-Objekt)
       if (typeof conversation.send === 'function') {
-        console.log('[DEBUG] Sende Text an Agent (input):', text, conversation);
-        // Zuerst mit { input: text }
         try {
-          console.log('[DEBUG] Warte auf conversation.send({ input })...')
+          console.log('[DEBUG] conversation object:', conversation);
+          console.log('[DEBUG] conversation.send exists:', typeof conversation.send);
+          console.log('[DEBUG] Sende an conversation.send:', { input: text });
           const sendResult = await conversation.send({ input: text });
-          sent = true;
-          console.log('[DEBUG] conversation.send({ input }) erfolgreich', sendResult);
-        } catch (err1) {
-          console.warn('[DEBUG] conversation.send({ input }) fehlgeschlagen', err1);
-          // Falls das nicht klappt, versuche { text: text }
-          try {
-            console.log('[DEBUG] Versuche Fallback mit { text }:', text);
-            console.log('[DEBUG] Warte auf conversation.send({ text })...')
-            const sendResult2 = await conversation.send({ text });
-            sent = true;
-            console.log('[DEBUG] conversation.send({ text }) erfolgreich', sendResult2);
-          } catch (err2) {
-            console.error('[DEBUG] conversation.send({ text }) fehlgeschlagen', err2);
-            alert('Fehler: Die Nachricht konnte nicht an den Agenten gesendet werden.');
-          }
-        }
-      } else if (signedUrl) {
-        // REST fallback for text-only mode
-        if (!conversationId) {
-          setMessages((prev) => [
-            ...prev,
-            { source: 'agent', message: '[Fehler: conversation_id nicht verfügbar]' },
-          ]);
+          console.log('[DEBUG] conversation.send result:', sendResult);
+          // Die Antwort wird über onMessage verarbeitet
+        } catch (err) {
+          console.error('[DEBUG] conversation.send({ input }) fehlgeschlagen', err);
+          alert('Fehler: Die Nachricht konnte nicht an den Agenten gesendet werden.');
           setPendingAgentMessage(false);
-          return;
         }
-        // Build correct REST endpoint
-        const restUrl = `https://api.elevenlabs.io/v1/convai/conversation/${conversationId}/interact`;
-        console.log('[DEBUG] REST-Fallback: Sende Text an REST-Endpoint:', restUrl, text);
-        setPendingAgentMessage(true);
+      } else if (signedUrl && conversationId) {
+        // REST fallback (korrekter Endpoint!)
+        const fallbackUrl = `https://api.elevenlabs.io/v1/conversations/${conversationId}/interact`;
         try {
-          const response = await fetch(restUrl, {
+          const response = await fetch(fallbackUrl, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -280,17 +259,11 @@ export default function VoiceAssistant() {
             throw new Error('REST-Fallback: Antwort nicht OK: ' + response.status);
           }
           const data = await response.json();
-          console.log('[DEBUG] REST-Fallback: Antwort erhalten:', data);
-          // Add agent response to chat
-          if (data && data.response) {
+          console.log('[DEBUG] REST-Fallback Antwort:', data);
+          if (data && (data.response || data.message)) {
             setMessages((prev) => [
               ...prev,
-              { source: 'agent', message: data.response },
-            ]);
-          } else if (data && data.message) {
-            setMessages((prev) => [
-              ...prev,
-              { source: 'agent', message: data.message },
+              { source: 'agent', message: data.response || data.message },
             ]);
           } else {
             setMessages((prev) => [
@@ -298,24 +271,26 @@ export default function VoiceAssistant() {
               { source: 'agent', message: '[Agenten-Antwort nicht lesbar]' },
             ]);
           }
-          setPendingAgentMessage(false);
         } catch (errRest) {
-          setPendingAgentMessage(false);
-          console.error('[DEBUG] REST-Fallback Fehler:', errRest);
           setMessages((prev) => [
             ...prev,
             { source: 'agent', message: '[Fehler bei der Agenten-Antwort]' },
           ]);
         }
+        setPendingAgentMessage(false);
       } else {
-        console.error('[DEBUG] conversation.send ist keine Funktion und kein signedUrl!', conversation)
+        setMessages((prev) => [
+          ...prev,
+          { source: 'agent', message: '[Fehler: conversation/send nicht verfügbar]' },
+        ]);
+        setPendingAgentMessage(false);
       }
     } catch (err) {
-      // Fehler beim Senden an das SDK: err
+      setPendingAgentMessage(false);
       console.error('[DEBUG] Fehler beim Senden an den Agenten:', err);
       alert('Fehler beim Senden an den Agenten: ' + (err?.message || err));
     }
-  };
+  }, [inputValue, conversation, connectionStatus, signedUrl, conversationId])
 
   // Automatisches Scrollen zum unteren Ende des Chatverlaufs, wenn neue Nachrichten kommen
   useEffect(() => {
@@ -428,6 +403,53 @@ export default function VoiceAssistant() {
     }
   }, [])
 
+  // Funktion zum Stummschalten/Entstummen des Mikrofons (nutzt ElevenLabs SDK)
+  const handleMuteToggle = useCallback(() => {
+    if (!conversation) return;
+    if (isMuted) {
+      conversation.setMicMuted(false);
+      setIsMuted(false);
+    } else {
+      conversation.setMicMuted(true);
+      setIsMuted(true);
+    }
+  }, [conversation, isMuted])
+
+  // --- Hilfskomponente für Aktionsbuttons (E-Mail, WhatsApp, Jobbörse) ---
+  function ActionButtons({ size = 'sm' }) {
+    const base = size === 'sm'
+      ? 'flex-1 rounded-2xl px-2 py-1.5 text-xs'
+      : 'flex-1 rounded-2xl px-4 py-2 text-sm'; // px-4/py-2 wie Hauptbutton
+    return useMemo(() => (
+      <>
+        <a href={MAIL_URL} target="_blank" rel="noopener noreferrer"
+          className={`${base} bg-[#ededed] text-[#252422] shadow hover:bg-[#df242c] hover:text-white text-center transition-colors flex items-center justify-center`}>
+          {/* Lucide Mail icon, clean and small */}
+          <Mail className="inline-block w-4 h-4 mr-1 -mt-0.5 align-middle" strokeWidth={2} /> E-Mail
+        </a>
+        <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer"
+          className={`${base} bg-[#ededed] text-[#252422] shadow hover:bg-[#df242c] hover:text-white text-center transition-colors flex items-center justify-center`}>
+          {/* Clean WhatsApp SVG icon, small and sharp */}
+          <svg viewBox="0 0 32 32" width="16" height="16" className="inline-block mr-1 -mt-0.5 align-middle" fill="none" stroke="#25D366" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="16" cy="16" r="14" fill="#fff" stroke="#25D366" strokeWidth="2"/>
+            <path d="M10.5 13.5c.5 2 2.5 4.5 5 5.5m0 0c.5.5 1.5 1 2 1m-2-1c.5-.5 1.5-1.5 2-2m-2 2c-1.5-1-3-3-3.5-4.5" stroke="#25D366"/>
+          </svg>
+          WhatsApp
+        </a>
+        <a href={JOB_URL} target="_blank" rel="noopener noreferrer"
+          className={`${base} bg-[#ededed] text-[#252422] shadow hover:bg-[#df242c] hover:text-white text-center transition-colors flex items-center justify-center`}>
+          {/* Modern briefcase icon for Jobbörse, small and sharp */}
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="inline-block mr-1 -mt-0.5 align-middle" stroke="#252422" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="7" width="18" height="13" rx="2.5" fill="#fff"/>
+            <path d="M16 7V5a4 4 0 0 0-8 0v2"/>
+            <path d="M3 12h18"/>
+          </svg>
+          Jobbörse
+        </a>
+      </>
+    ), [base]);
+  }
+
   return (
     <div className={`min-h-screen flex flex-col items-center justify-center bg-white p-4${isIframe ? ' min-h-0 h-full' : ''}`}
          style={isIframe ? { minHeight: '100vh', height: '100vh', padding: 0 } : { paddingLeft: 16, paddingRight: 16, minHeight: '100vh' }}>
@@ -437,14 +459,19 @@ export default function VoiceAssistant() {
         <div className="w-full flex flex-col items-center text-center mb-3 px-2">
           <h2 className="text-lg font-semibold text-[#252422] mb-1">Willkommen beim Job & Azubiberater!</h2>
           <p className="text-sm text-gray-700 max-w-md leading-snug mb-2">
-            Du hast Fragen zu Ausbildung, Jobs oder möchtest mehr über Mölders als Arbeitgeber wissen?
+            Du interessierst dich für eine Ausbildung, einen Job oder möchtest mehr über Mölders als Arbeitgeber erfahren?
           </p>
           <p className="text-sm text-gray-700 max-w-md leading-snug mb-2">
-            Anna beantwortet dir gerne alle Fragen rund um offene Stellen, den Bewerbungsprozess und unsere Ausbildungsangebote.
+            <b>Anna</b> beantwortet dir alle Fragen rund um offene Stellen, den Bewerbungsprozess und unsere Ausbildungsangebote – persönlich, unkompliziert und direkt.
           </p>
-          <p className="text-sm text-gray-700 max-w-md leading-snug">
-            Starte das Gespräch oder nutze die Kontaktmöglichkeiten unten. Wir freuen uns auf dich!
-          </p>
+          <div className="w-full flex flex-col items-center gap-1 mt-2">
+            <span className="text-sm text-gray-700 max-w-md leading-snug">
+              Starte jetzt das Gespräch oder nutze die Kontaktmöglichkeiten unten.
+            </span>
+            <span className="text-sm text-gray-700 max-w-md leading-snug">
+              Wir freuen uns auf deine Nachricht!
+            </span>
+          </div>
         </div>
         {/* Agenten-Auswahl: Anna oder Joshua */}
         <style jsx global>{`
@@ -472,9 +499,7 @@ export default function VoiceAssistant() {
           .animate-pulse-spin-slow { animation: pulse-spin-slow 2.5s linear infinite; }
           .animate-pulse-spin-rev { animation: pulse-spin-rev 2.2s linear infinite; }
           .animate-pulse-scale { animation: pulse-scale 2.8s ease-in-out infinite; }
-          .animate-profile-pulse {
-            animation: profile-pulse 1.6s cubic-bezier(0.4,0,0.2,1) infinite;
-          }
+          .animate-profile-pulse { animation: profile-pulse 1.6s cubic-bezier(0.4,0,0.2,1) infinite; }
 
           /* Modern Voice Bars Animation */
           .voice-bars {
@@ -553,8 +578,14 @@ export default function VoiceAssistant() {
                 </>
               )}
               <button
-                onClick={() => setSelectedAgent('anna')}
-                className={`flex flex-col items-center focus:outline-none transition-all duration-200 relative z-10`}
+                onClick={() => {
+                  if (!isActive && privacyChecked) {
+                    startConversation();
+                  } else {
+                    setSelectedAgent('anna');
+                  }
+                }}
+                className={`flex flex-col items-center focus:outline-none transition-all duration-200 relative z-10 ${privacyChecked && !isActive ? 'cursor-pointer' : 'cursor-default'}`}
                 aria-label="Anna auswählen"
                 type="button"
                 style={{ background: 'none', border: 'none', padding: 0 }}
@@ -563,10 +594,20 @@ export default function VoiceAssistant() {
                 <img
                   src="/public-pics/anna.jpg"
                   alt="Anna, Azubiberaterin"
-                  className={`object-cover shadow rounded-full border-4 border-[#df242c] transition-all duration-300 relative w-36 h-36 z-10${isSpeaking ? ' animate-profile-pulse' : ''}`}
+                  className={`object-cover shadow rounded-full border-4 border-[#df242c] transition-all duration-300 relative w-44 h-44 z-10${isSpeaking ? ' animate-profile-pulse' : ''}`}
                   style={{willChange: 'transform'}}
                 />
-                <span className="text-xs font-medium text-[#252422] mt-2">Anna</span>
+                {/* Anna-Sticker noch weiter nach rechts (fast am Rand), größere Schrift */}
+                <span
+                  className="absolute left-[99%] top-6 bg-[#df242c] text-white text-sm font-semibold px-5 py-1 rounded-full shadow-lg border-2 border-white z-20"
+                  style={{
+                    transform: 'translate(-50%, 0)',
+                    minWidth: 60,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
+                  }}
+                >
+                  Anna
+                </span>
               </button>
             </div>
           </div>
@@ -596,19 +637,20 @@ export default function VoiceAssistant() {
         </div>
         {/* Gespräch starten Button + Status-Kreis exakt wie Chatfenster, Status-Kreis zentriert */}
         <div className='flex flex-col items-center mb-8 relative w-full max-w-[420px]'>
-          <div className="w-full max-w-[420px] flex flex-row items-center justify-center relative">
-            {/* Button + Status-Kreis als bündige Einheit, Kreis bleibt im Button! */}
-            <div className="relative w-full max-w-[420px] flex items-center justify-center mx-auto">
+          <div className="w-full max-w-[420px] flex flex-row items-center justify-end relative gap-2">
+            {/* Main button: left-aligned, right edge moves left when active to make space for mute button */}
+            <div className={`relative flex items-center transition-all duration-200 ${isActive ? 'flex-grow' : 'w-full'} max-w-[420px]`} style={{flexGrow: isActive ? 1 : undefined, width: isActive ? 'calc(100% - 64px)' : '100%'}}>
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.97 }}
                 onClick={isActive ? endConversation : startConversation}
-                className={`mb-2 pr-4 pl-6 py-2 rounded-2xl text-base font-semibold shadow-md transition-all duration-200 focus:outline-none flex-grow-0 flex-shrink-0 flex items-center justify-between relative w-full`
-                  + (isActive ? ' bg-gray-200 text-[#df242c] hover:bg-gray-300' : selectedAgent === 'anna' ? ' bg-[#df242c] text-white hover:bg-[#b81c24]' : ' bg-[#028e4a] text-white hover:bg-[#026c39]')
+                className={`pr-4 pl-6 py-2 rounded-2xl text-base font-semibold shadow-md transition-all duration-200 focus:outline-none flex-grow flex-shrink flex items-center justify-between relative w-full`
+                  + (isActive ? ' border border-[#df242c] text-[#df242c] bg-white hover:bg-[#df242c] hover:text-white' : selectedAgent === 'anna' ? ' bg-[#df242c] text-white hover:bg-[#b81c24]' : ' bg-[#028e4a] text-white hover:bg-[#026c39]')
                   + (!privacyChecked && !isActive ? ' opacity-50 cursor-not-allowed' : '')}
                 aria-label={isActive ? 'Gespräch beenden' : 'Gespräch starten'}
                 disabled={!privacyChecked && !isActive}
-                style={{height:'48px', minWidth:0, width: '100%', maxWidth: '420px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position:'relative'}}
+                type="button"
+                style={{height:'48px', minWidth:0, width: '100%', maxWidth: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position:'relative'}}
               >
                 <span className="w-full text-center block" style={{marginRight: '40px'}}>
                   {isActive ? 'Gespräch beenden' : `Gespräch mit ${selectedAgent === 'anna' ? 'Anna' : 'Joshua'} starten`}
@@ -640,344 +682,166 @@ export default function VoiceAssistant() {
                 </span>
               </motion.button>
             </div>
+            {/* Mute/Unmute Icon-Button: Nur sichtbar, wenn Gespräch aktiv ist, rechts daneben */}
+            {isActive && (
+              <button
+                onClick={handleMuteToggle}
+                className={
+                  `flex items-center justify-center rounded-full transition-colors w-12 h-12 shadow-md border-4 focus:outline-none ml-2 ` +
+                  (isMuted
+                    ? 'bg-[#fff] border-[#f39c12]' // Orange Ring wenn gemutet
+                    : 'bg-[#fff] border-[#28b463]') // Neutraler grüner Ring wenn aktiv
+                }
+                type="button"
+                aria-label={isMuted ? 'Mikrofon einschalten' : 'Mikrofon stummschalten'}
+                title={isMuted ? 'Mikrofon einschalten' : 'Mikrofon stummschalten'}
+                style={{minHeight:'48px', minWidth:'48px', borderWidth: '4px'}}
+              >
+                {/* Mikrofon-Icon in dezentem Grau #7c7c7c */}
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#7c7c7c" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <rect x="9" y="2" width="6" height="12" rx="3" />
+                  <path d="M5 10v2a7 7 0 0 0 14 0v-2" />
+                  <line x1="12" y1="19" x2="12" y2="22" />
+                  <line x1="8" y1="22" x2="16" y2="22" />
+                  {isMuted && (
+                    <line x1="4" y1="4" x2="20" y2="20" stroke="#f39c12" strokeWidth="2.8" strokeLinecap="round" opacity="0.95" />
+                  )}
+                </svg>
+              </button>
+            )}
           </div>
         </div>
-        {/* Zeige Chat Button: eigene Zeile, volle Breite, max wie Chatfenster */}
-        <div className="flex w-full justify-center mb-2">
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={() => setShowChat(!showChat)}
-            className={`w-full max-w-[420px] px-2 py-2 rounded-xl bg-[#f0f0f0] text-[#252422] text-xs font-semibold flex flex-row items-center justify-center shadow-sm border border-gray-200 transition-colors h-11 mb-2 ${showChat ? 'bg-[#df242c] text-[#5d6669] border-[#df242c]' : 'hover:bg-[#df242c] hover:text-white hover:border-[#df242c]'}`}
-            type="button"
-            style={{lineHeight: 1.1}}
-          >
-            <MessageCircle className={`w-4 h-4 mr-2${showChat ? ' text-[#5d6669]' : ''}`} />
-            <span className='leading-tight'>{showChat ? 'Chat verbergen' : 'Zeige Chat'}</span>
-          </motion.button>
-        </div>
-        {/* Action Buttons: E-Mail, WhatsApp, Stellen - Position je nach Chat-Status */}
-        {!showChat && (
-          <div className="flex flex-row gap-3 mb-2 w-full justify-center max-w-[420px] mx-auto">
-            <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => window.location.href = 'mailto:azubianfragen@moelders.de?subject=Anfrage%20%C3%BCber%20KI%20Anna%20zu%20Jobs%2C%20Ausbildung%20und%20Praktika'}
-              className={`flex-1 px-2 py-1.5 rounded-xl bg-[#f0f0f0] text-[#252422] text-xs font-semibold flex flex-col items-center justify-center space-y-0.5 shadow-sm border border-[#f0f0f0] transition-colors h-10 min-w-0 hover:bg-[#df242c] hover:text-white hover:border-[#df242c]`}
-              type="button"
-              style={{lineHeight: 1.1}}
-            >
-              <Mail className='w-4 h-4 mb-0.5' />
-              <span className='leading-tight'>E-Mail</span>
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => window.open('https://wa.me/4915123206142', '_blank')}
-              className={`flex-1 px-2 py-1.5 rounded-xl bg-[#f0f0f0] text-[#252422] text-xs font-semibold flex flex-col items-center justify-center space-y-0.5 shadow-sm border border-[#f0f0f0] transition-colors h-10 min-w-0 hover:bg-[#df242c] hover:text-white hover:border-[#df242c]`}
-              type="button"
-              style={{lineHeight: 1.1}}
-            >
-              {/* WhatsApp SVG Icon */}
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="currentColor" className="w-4 h-4 mb-0.5"><path d="M16 3C9.373 3 4 8.373 4 15c0 2.385.832 4.584 2.236 6.37L4.062 28.25a1 1 0 0 0 1.312 1.312l6.88-2.174A11.96 11.96 0 0 0 16 27c6.627 0 12-5.373 12-12S22.627 3 16 3zm0 2c5.523 0 10 4.477 10 10s-4.477 10-10 10a9.96 9.96 0 0 1-5.09-1.39 1 1 0 0 0-.77-.09l-5.13 1.62 1.62-5.13a1 1 0 0 0-.09-.77A9.96 9.96 0 0 1 6 15c0-5.523 4.477-10 10-10zm-4.09 6.09c-.23-.52-.47-.53-.68-.54-.18-.01-.39-.01-.6-.01-.21 0-.55.08-.84.39-.29.31-1.1 1.08-1.1 2.63 0 1.55 1.13 3.05 1.29 3.26.16.21 2.21 3.37 5.44 4.59.76.29 1.36.46 1.83.59.77.2 1.47.17 2.02.1.62-.08 1.91-.78 2.18-1.54.27-.76.27-1.41.19-1.54-.08-.13-.29-.21-.6-.37-.31-.16-1.91-.94-2.2-1.05-.29-.11-.5-.16-.71.16-.21.32-.82 1.05-1.01 1.27-.19.22-.37.24-.68.08-.31-.16-1.31-.48-2.5-1.53-.92-.77-1.54-1.72-1.72-2.03-.18-.31-.02-.48.14-.64.14-.14.31-.37.47-.56.16-.19.21-.32.32-.53.11-.21.06-.4-.02-.56z"/></svg>
-              <span className='leading-tight'>WhatsApp</span>
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => window.open('https://www.moelders.de/unternehmen/jobboerse', '_blank', 'noopener,noreferrer')}
-              className={`flex-1 px-2 py-1.5 rounded-xl bg-[#f0f0f0] text-[#252422] text-xs font-semibold flex flex-col items-center justify-center space-y-0.5 shadow-sm border border-[#f0f0f0] transition-colors h-10 min-w-0 hover:bg-[#df242c] hover:text-white hover:border-[#df242c]`}
-              type="button"
-              style={{lineHeight: 1.1}}
-            >
-              <Bot className='w-4 h-4 mb-0.5' />
-              <span className='leading-tight'>Jobbörse</span>
-            </motion.button>
+        {/* Datenschutz-Modal */}
+        {showPrivacyModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <div className="bg-white rounded-xl shadow-2xl max-w-xs w-full p-5 flex flex-col items-center border border-[#eee] relative">
+              <button
+                className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-xl font-bold"
+                aria-label="Schließen"
+                onClick={() => setShowPrivacyModal(false)}
+                style={{background:'none',border:'none',padding:0,lineHeight:1}}
+              >×</button>
+              <div className="text-xs text-gray-800 mb-4 text-center leading-snug">
+                Mit dem Klick auf <b>„Zustimmen“</b> und bei jeder weiteren Interaktion mit diesem KI-Agenten erklärst <b>du</b> dich damit einverstanden, dass <b>deine</b> Kommunikation aufgezeichnet, gespeichert und mit Drittanbietern geteilt wird – wie in der <a href="https://www.moelders.de/datenschutz" target="_blank" rel="noopener noreferrer" className="underline text-[#df242c]">Datenschutzrichtlinie</a> beschrieben.<br /><br />
+                Wenn <b>du</b> nicht möchtest, dass <b>deine</b> Gespräche aufgezeichnet werden, verzichte bitte auf die Nutzung dieses Dienstes.
+              </div>
+              <div className="flex flex-row gap-3 w-full mt-2">
+                <button
+                  className="flex-1 px-3 py-1.5 rounded-lg bg-[#df242c] text-white text-xs font-semibold hover:bg-[#b81c24] transition-colors"
+                  onClick={() => {
+                    setPrivacyAccepted(true);
+                    setPrivacyChecked(true);
+                    setShowPrivacyModal(false);
+                  }}
+                >Zustimmen</button>
+                <button
+                  className="flex-1 px-3 py-1.5 rounded-lg bg-gray-200 text-gray-700 text-xs font-semibold hover:bg-gray-300 transition-colors"
+                  onClick={() => {
+                    setPrivacyAccepted(false);
+                    setPrivacyChecked(false);
+                    setShowPrivacyModal(false);
+                  }}
+                >Ablehnen</button>
+              </div>
+            </div>
           </div>
         )}
-        {/* Chat area */}
-        <AnimatePresence>
+        {/* Chatfenster und Aktionsbuttons (klassisch gestapelt, Card-Look, klare Abstände) */}
+        <div className="w-full max-w-[420px] flex flex-col items-center">
+          {/* Zeige Chat Button unter Gespräch starten/beenden */}
+          <div className="w-full flex flex-col items-center mb-2">
+            <button
+              className="rounded-2xl px-4 py-2 bg-[#ededed] text-[#252422] text-sm shadow hover:bg-[#df242c] hover:text-white transition-colors focus:outline-none w-full max-w-[420px] flex items-center justify-center gap-2 relative"
+              type="button"
+              onClick={() => setShowChat((prev) => !prev)}
+              aria-expanded={showChat}
+              aria-controls="chatbereich"
+              style={{width:'100%', maxWidth:'420px'}}>
+              {/* Speech bubble icon */}
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="inline-block mr-1 -mt-0.5" aria-hidden="true"><path d="M21 11.5C21 16 16.97 19 12 19c-.97 0-1.91-.09-2.8-.27-.37-.07-.75-.01-1.07.17l-2.13 1.19c-.76.43-1.68-.23-1.54-1.09l.37-2.19c.06-.37-.03-.75-.25-1.05C3.53 14.13 3 12.87 3 11.5 3 7 7.03 4 12 4s9 3 9 7.5Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/></svg>
+              {showChat ? 'Chat ausblenden' : 'Zeige Chat'}
+              {/* Plus/Minus Symbol ganz rechts mit Abstand */}
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-lg select-none" aria-hidden="true" style={{paddingLeft:'8px'}}>{showChat ? '−' : '+'}</span>
+            </button>
+            {/* Aktionsbuttons: nur im zugeklappten Modus unter dem Button sichtbar */}
+            {!showChat && (
+              <div className="w-full flex flex-row items-center justify-between gap-2 mt-2 max-w-[420px]">
+                <ActionButtons size="md" />
+              </div>
+            )}
+          </div>
+          {/* Chatbereich: nur sichtbar, wenn showChat true */}
           {showChat && (
-            <>
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                className='w-full bg-white rounded-2xl overflow-hidden shadow-xl mb-2 mt-6 border border-[#eee]'
-                style={{ boxShadow: '0 4px 32px 0 rgba(34,34,34,0.10)', backdropFilter: 'blur(0.5px)' }}
-              >
-                {/* Header mit Avatar und Status */}
-                <div className='flex items-center gap-2 px-4 pt-4 pb-1' style={{ background: '#f7f7f8', borderTopLeftRadius: '1rem', borderTopRightRadius: '1rem' }}>
-                  <img
-                    src={'/public-pics/anna.jpg'}
-                    alt={'Anna, Azubiberaterin'}
-                    className='w-8 h-8 rounded-full border border-[#df242c] object-cover shadow'
-                  />
-                  <span className='text-gray-700 text-sm rounded-full px-3 py-0.5 font-medium'>Ich höre dir zu...</span>
-                </div>
-                {/* Chatverlauf */}
-                <div
-                  ref={scrollAreaRef}
-                  className='h-80 overflow-y-auto px-4 py-3 space-y-5 scrollbar-thin scrollbar-thumb-[#eee] scrollbar-track-[#fafafa]'
-                >
-                  {messages.map((message, index) => (
-                    <div
-                      key={index}
-                      className={`flex ${
-                        message.source === 'user'
-                          ? 'justify-end'
-                          : 'justify-start'
-                      } items-end w-full`}
-                    >
-                      {message.source !== 'user' && (
-                        <img
-                          src={'/public-pics/anna.jpg'}
-                          alt={'Anna, Azubiberaterin'}
-                          className='w-9 h-9 rounded-full border border-[#df242c] object-cover shadow'
-                        />
-                      )}
-                      <div
-                        className={
-                          message.source === 'user'
-                            ? 'bg-gradient-to-br from-[#df242c] to-[#b81c24] text-white border border-[#df242c] text-right px-5 py-2 max-w-[75%] shadow-lg relative user-bubble break-words'
-                            : 'bg-gradient-to-br from-gray-100 to-gray-200 text-[#252422] border border-gray-200 text-left px-5 py-2 max-w-[75%] shadow-lg relative agent-bubble break-words'
-                        }
-                        style={{ fontSize: 13, lineHeight: 1.45, minWidth: 60, borderRadius: message.source === 'user' ? '18px 18px 4px 18px' : '18px 18px 18px 4px', wordBreak: 'break-word', overflowWrap: 'anywhere' }}
-                      >
-                        {/* URLs im Text automatisch verlinken, Zeilenumbrüche erhalten, Punkt/Komma am Ende nicht Teil des Links, Links immer eigene Zeile */}
-                        {(() => {
-                          const urlRegex = /((https?:\/\/|www\.)[\w\-]+(\.[\w\-]+)+(\/[\w\-.,@?^=%&:/~+#]*)?(#[\w\-]+)?)/gi;
-                          // Splitte an URLs, aber behalte die Reihenfolge
-                          const parts = [];
-                          let lastIndex = 0;
-                          let match;
-                          while ((match = urlRegex.exec(message.message)) !== null) {
-                            // Text vor der URL
-                            if (match.index > lastIndex) {
-                              parts.push({ text: message.message.slice(lastIndex, match.index), isLink: false });
-                            }
-                            let url = match[0];
-                            // Entferne Punkt, Komma, Semikolon, Doppelpunkt am Ende
-                            let trailing = '';
-                            while (/[.,;:!?)]$/.test(url)) {
-                              trailing = url.slice(-1) + trailing;
-                              url = url.slice(0, -1);
-                            }
-                            let href = url;
-                            if (!/^https?:\/\//i.test(href)) href = 'https://' + href;
-                            // Nur Links mit mindestens einem Punkt und ohne offensichtliche Fehler
-                            if (/^https?:\/\/\.[a-zA-Z]/.test(url) || /\s/.test(url)) {
-                              // Kein echter Link
-                              parts.push({ text: match[0], isLink: false });
-                            } else {
-                              // Link immer in eigener Zeile mit <br /> davor und danach
-                              parts.push({ text: url, isLink: true, href, trailing });
-                            }
-                            lastIndex = match.index + match[0].length;
-                          }
-                          // Restlicher Text nach der letzten URL
-                          if (lastIndex < message.message.length) {
-                            parts.push({ text: message.message.slice(lastIndex), isLink: false });
-                          }
-                          // Baue JSX mit Zeilenumbrüchen und Links in eigener Zeile
-                          const jsx = [];
-                          parts.forEach((part, i) => {
-                            if (part.isLink) {
-                              jsx.push(<br key={`br-before-${i}`} />);
-                              jsx.push(
-                                <a key={i} href={part.href} target="_blank" rel="noopener noreferrer" className="underline text-[#df242c] break-all hover:text-[#b81c24]" style={{wordBreak:'break-all', display:'inline-block'}}>{part.text}</a>
-                              );
-                              jsx.push(<br key={`br-after-${i}`} />);
-                              if (part.trailing) jsx.push(<span key={`trail-${i}`}>{part.trailing}</span>);
-                            } else {
-                              // Zeilenumbrüche im normalen Text erhalten
-                              part.text.split(/(\n)/).forEach((t, j) => {
-                                if (t === '\n') jsx.push(<br key={`nl-${i}-${j}`} />);
-                                else if (t) jsx.push(<span key={`txt-${i}-${j}`}>{t}</span>);
-                              });
-                            }
-                          });
-                          return jsx;
-                        })()}
-                        {/* Sprechblasen-Pfeil wie im Beispielbild */}
-                        {message.source === 'user' ? (
-                          <span style={{ position: 'absolute', right: -8, bottom: 0, width: 0, height: 0, borderTop: '10px solid transparent', borderBottom: '10px solid transparent', borderLeft: '12px solid #b81c24' }} />
-                        ) : (
-                          <span style={{ position: 'absolute', left: -8, bottom: 0, width: 0, height: 0, borderTop: '10px solid transparent', borderBottom: '10px solid transparent', borderRight: '12px solid #e5e7eb' }} />
+            <div id="chatbereich" className="w-full max-w-[420px] flex flex-col items-center">
+              {/* Chatfenster */}
+              <div className="w-full bg-white rounded-2xl shadow-lg border border-gray-200 p-4 mb-4 max-h-[320px] min-h-[120px] overflow-y-auto text-sm" ref={scrollAreaRef} style={{minHeight:120, maxHeight:320}}>
+                {messages.length === 0 ? (
+                  <div className="text-gray-400 text-center py-8 select-none">Hier erscheint dein Chatverlauf mit Anna.</div>
+                ) : (
+                  messages.map((msg, idx) => (
+                    <div key={idx} className={`mb-2 flex ${msg.source === 'user' ? 'justify-end' : 'justify-start'}`}> 
+                      <div className={`px-3 py-2 rounded-xl max-w-[80%] whitespace-pre-line break-words shadow-sm ${msg.source === 'user' ? 'bg-[#df242c] text-white' : 'bg-gray-100 text-[#252422]'}`}
+                        style={{wordBreak:'break-word'}}>
+                        {/* URLs automatisch erkennen und verlinken */}
+                        {msg.message.split(/(https?:\/\/[^\s]+)/g).map((part, i) =>
+                          /^https?:\/\//.test(part) ? (
+                            <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="underline break-all text-blue-600 hover:text-blue-800">{part}</a>
+                          ) : part
                         )}
                       </div>
                     </div>
-                  ))}
-                  {/* Ladeindikator für Agenten-Nachricht, neutral (drei Punkte) */}
-                  {pendingAgentMessage && (
-                    <div className="flex justify-start items-end w-full">
-                      <img
-                        src={'/public-pics/anna.jpg'}
-                        alt={'Anna, Azubiberaterin'}
-                        className='w-8 h-8 rounded-full border border-[#df242c] object-cover mr-2'
-                      />
-                      <div className='bg-gradient-to-br from-gray-100 to-gray-200 text-[#252422] border border-gray-200 text-left px-5 py-2 max-w-[75%] shadow-lg relative agent-bubble flex items-center gap-2' style={{ fontSize: 13, lineHeight: 1.45, minWidth: 60, borderRadius: '18px 18px 18px 4px' }}>
-                        <span className="flex flex-row gap-1 items-center" aria-label="Agent tippt">
-                          <span className={`w-2 h-2 rounded-full animate-bounce`} style={{backgroundColor: selectedAgent === 'anna' ? '#dd232d' : '#028e4a', animationDelay:'0s'}}></span>
-                          <span className={`w-2 h-2 rounded-full animate-bounce`} style={{backgroundColor: selectedAgent === 'anna' ? '#dd232d' : '#028e4a', animationDelay:'0.18s'}}></span>
-                          <span className={`w-2 h-2 rounded-full animate-bounce`} style={{backgroundColor: selectedAgent === 'anna' ? '#dd232d' : '#028e4a', animationDelay:'0.36s'}}></span>
-                        </span>
-                        <span style={{ position: 'absolute', left: -8, bottom: 0, width: 0, height: 0, borderTop: '10px solid transparent', borderBottom: '10px solid transparent', borderRight: '12px solid #e5e7eb' }} />
-                      </div>
-                    </div>
-                  )}
-                </div>
-                {/* Texteingabe und Senden-Button entfernt (keine Texteingabe mehr möglich) */}
-                {/* <form>
-                  className="flex flex-row items-center gap-2 px-4 pt-2 pb-1 border-t border-[#eee] bg-white"
-                  style={{marginTop:0}}
-                  onSubmit={e => {
-                    e.preventDefault();
-                    handleSend();
-                  }}
+                  ))
+                )}
+                {pendingAgentMessage && (
+                  <div className="flex justify-start mb-2">
+                    <div className="px-3 py-2 rounded-xl bg-gray-100 text-[#252422] max-w-[80%] animate-pulse">Anna schreibt ...</div>
+                  </div>
+                )}
+              </div>
+              {/* Text-Eingabe und Senden (deaktiviert) */}
+              {/*
+              <form className="w-full flex flex-row items-center gap-2 mb-2" onSubmit={e => {e.preventDefault(); handleSend();}} autoComplete="off">
+                <input
+                  type="text"
+                  className="flex-grow rounded-xl border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-[#df242c] bg-white"
+                  placeholder="Deine Nachricht ..."
+                  value={inputValue}
+                  onChange={e => setInputValue(e.target.value)}
+                  disabled
+                  style={{minWidth:0}}
+                />
+                <button
+                  type="submit"
+                  className="rounded-xl px-3 py-2 bg-[#df242c] text-white font-semibold text-sm shadow hover:bg-[#b81c24] transition-colors disabled:opacity-50"
+                  disabled
+                  aria-label="Senden"
                 >
-                  <input
-                    type="text"
-                    value={inputValue}
-                    onChange={e => setInputValue(e.target.value)}
-                    placeholder="Nachricht eingeben..."
-                    className="flex-1 rounded-lg border border-[#df242c] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#df242c] bg-white shadow-sm"
-                    disabled={!conversation || connectionStatus !== 'connected'}
-                    autoComplete="off"
-                  />
-                  <button
-                    type="submit"
-                    className="px-4 py-2 rounded-lg bg-[#df242c] text-white font-semibold text-sm shadow hover:bg-[#b81c24] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={!inputValue.trim() || !conversation || connectionStatus !== 'connected'}
-                  >Senden</button>
-                </form> */}
-                {/* Footer: Kompakte Action Buttons in einer Zeile, darunter Download-Button über die ganze Breite */}
-                <div className='flex flex-col gap-2 px-4 pb-3 pt-1 border-t border-[#eee] bg-white'>
-                  <div className='flex flex-row justify-between items-center gap-2 w-full mb-1'>
-                    <motion.button
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.97 }}
-                      onClick={() => window.location.href = 'mailto:azubianfragen@moelders.de?subject=Anfrage%20%C3%BCber%20KI%20Anna%20zu%20Jobs%2C%20Ausbildung%20und%20Praktika'}
-                      className='flex-1 px-1.5 py-1 rounded-lg bg-[#f0f0f0] text-[#252422] text-[10px] font-semibold flex flex-col items-center justify-center shadow-sm border border-[#f0f0f0] transition-colors h-8 min-w-0 text-center hover:bg-[#df242c] hover:text-white hover:border-[#df242c]'
-                      type="button"
-                      style={{lineHeight: 1.1}}
-                    >
-                      <Mail className='w-3.5 h-3.5 mb-0.5' />
-                      <span className='leading-tight'>E-Mail</span>
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.97 }}
-                      onClick={() => window.open('https://wa.me/4915123206142', '_blank')}
-                      className='flex-1 px-1.5 py-1 rounded-lg bg-[#f0f0f0] text-[#252422] text-[10px] font-semibold flex flex-col items-center justify-center shadow-sm border border-[#f0f0f0] transition-colors h-8 min-w-0 text-center hover:bg-[#df242c] hover:text-white hover:border-[#df242c]'
-                      type="button"
-                      style={{lineHeight: 1.1}}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="currentColor" className="w-3.5 h-3.5 mb-0.5"><path d="M16 3C9.373 3 4 8.373 4 15c0 2.385.832 4.584 2.236 6.37L4.062 28.25a1 1 0 0 0 1.312 1.312l6.88-2.174A11.96 11.96 0 0 0 16 27c6.627 0 12-5.373 12-12S22.627 3 16 3zm0 2c5.523 0 10 4.477 10 10s-4.477 10-10 10a9.96 9.96 0 0 1-5.09-1.39 1 1 0 0 0-.77-.09l-5.13 1.62 1.62-5.13a1 1 0 0 0-.09-.77A9.96 9.96 0 0 1 6 15c0-5.523 4.477-10 10-10zm-4.09 6.09c-.23-.52-.47-.53-.68-.54-.18-.01-.39-.01-.6-.01-.21 0-.55.08-.84.39-.29.31-1.1 1.08-1.1 2.63 0 1.55 1.13 3.05 1.29 3.26.16.21 2.21 3.37 5.44 4.59.76.29 1.36.46 1.83.59.77.2 1.47.17 2.02.1.62-.08 1.91-.78 2.18-1.54.27-.76.27-1.41.19-1.54-.08-.13-.29-.21-.6-.37-.31-.16-1.91-.94-2.2-1.05-.29-.11-.5-.16-.71.16-.21.32-.82 1.05-1.01 1.27-.19.22-.37.24-.68.08-.31-.16-1.31-.48-2.5-1.53-.92-.77-1.54-1.72-1.72-2.03-.18-.31-.02-.48.14-.64.14-.14.31-.37.47-.56.16-.19.21-.32.32-.53.11-.21.06-.4-.02-.56z"/></svg>
-                      <span className='leading-tight'>WhatsApp</span>
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.97 }}
-                      onClick={() => window.open('https://www.moelders.de/unternehmen/jobboerse', '_blank', 'noopener,noreferrer')}
-                      className='flex-1 px-1.5 py-1 rounded-lg bg-[#f0f0f0] text-[#252422] text-[10px] font-semibold flex flex-col items-center justify-center shadow-sm border border-[#f0f0f0] transition-colors h-8 min-w-0 text-center hover:bg-[#df242c] hover:text-white hover:border-[#df242c]'
-                      type="button"
-                      style={{lineHeight: 1.1}}
-                    >
-                      <Bot className='w-3.5 h-3.5 mb-0.5' />
-                      <span className='leading-tight'>Jobbörse</span>
-                    </motion.button>
-                  </div>
-                  <button
-                    className='w-full mt-1 p-1.5 rounded-lg border border-[#df242c] text-[#df242c] hover:bg-[#df242c] hover:text-white transition-colors flex items-center justify-center gap-1 text-xs min-w-0 h-8'
-                    onClick={() => downloadTranscript(messages)}
-                    aria-label='Chat herunterladen'
-                    type='button'
-                  >
-                    <Download className='w-4 h-4' />
-                    <span className='font-medium'>Gespräch herunterladen</span>
-                  </button>
-                  {/* Status-Badge: Immer am unteren Rand des Chatfensters (unsichtbar gemacht) */}
-                  <div className="w-full flex justify-center pt-2" style={{display:'none'}}>
-                    {connectionStatus === 'connected' && (
-                      <div className="inline-flex items-center bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full shadow-md">
-                        <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>Verbunden
-                      </div>
-                    )}
-                    {connectionStatus === 'connecting' && (
-                      <div className="inline-flex items-center bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded-full shadow-md">
-                        <span className="w-2 h-2 bg-yellow-500 rounded-full mr-1 animate-pulse"></span>Verbinde…
-                      </div>
-                    )}
-                    {connectionStatus === 'disconnected' && (
-                      <div className="inline-flex items-center bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full shadow-md">
-                        <span className="w-2 h-2 bg-red-500 rounded-full mr-1"></span>Nicht verbunden
-                      </div>
-                    )}
-                  </div>
+                  <MessageCircle className="w-5 h-5" />
+                </button>
+              </form>
+              */}
+              {/* Download Button: jetzt volle Breite unterhalb der Aktionsbuttons */}
+              <div className="w-full flex flex-row justify-center mb-3 mt-2">
+                <button
+                  type="button"
+                  className="rounded-2xl px-2 py-1.5 bg-[#ededed] text-[#252422] text-xs shadow hover:bg-[#df242c] hover:text-white transition-colors w-full flex items-center justify-center"
+                  onClick={() => downloadTranscript(messages)}
+                  aria-label="Gespräch runterladen"
+                  disabled={messages.length === 0}
+                >
+                  <Download className="w-4 h-4 mr-1 inline-block align-middle" /> Gespräch runterladen
+                </button>
+              </div>
+              {/* Aktionsbuttons: im ausgeklappten Modus verkleinert im Footerbereich */}
+              {showChat && (
+                <div className="w-full flex flex-row items-center justify-between gap-2 mt-1 pb-1 pt-2 border-t border-gray-100">
+                  <ActionButtons size="sm" />
                 </div>
-              </motion.div>
-            </>
+              )}
+            </div>
           )}
-        </AnimatePresence>
-        {/* Status-Badge: Unter den Action-Buttons, wenn Chat geschlossen */}
-        {!showChat && (
-          <div className="w-full flex justify-center mb-2" style={{ display: 'none' }}>
-            {/* Status-Badge ist jetzt unsichtbar, da Status am Button angezeigt wird */}
-            {connectionStatus === 'connected' && (
-              <div className="inline-flex items-center bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full shadow-md">
-                <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>Verbunden
-              </div>
-            )}
-            {connectionStatus === 'connecting' && (
-              <div className="inline-flex items-center bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded-full shadow-md">
-                <span className="w-2 h-2 bg-yellow-500 rounded-full mr-1 animate-pulse"></span>Verbinde…
-              </div>
-            )}
-            {connectionStatus === 'disconnected' && (
-              <div className="inline-flex items-center bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full shadow-md">
-                <span className="w-2 h-2 bg-red-500 rounded-full mr-1"></span>Nicht verbunden
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-      {/* Datenschutz-Modal */}
-      {showPrivacyModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-2xl max-w-xs w-full p-5 flex flex-col items-center border border-[#eee] relative">
-            <button
-              className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-xl font-bold"
-              aria-label="Schließen"
-              onClick={() => setShowPrivacyModal(false)}
-              style={{background:'none',border:'none',padding:0,lineHeight:1}}
-            >×</button>
-            <div className="text-xs text-gray-800 mb-4 text-center leading-snug">
-              Mit dem Klick auf <b>„Zustimmen“</b> und bei jeder weiteren Interaktion mit diesem KI-Agenten erklärst <b>du</b> dich damit einverstanden, dass <b>deine</b> Kommunikation aufgezeichnet, gespeichert und mit Drittanbietern geteilt wird – wie in der <a href="https://www.moelders.de/datenschutz" target="_blank" rel="noopener noreferrer" className="underline text-[#df242c]">Datenschutzrichtlinie</a> beschrieben.<br /><br />
-              Wenn <b>du</b> nicht möchtest, dass <b>deine</b> Gespräche aufgezeichnet werden, verzichte bitte auf die Nutzung dieses Dienstes.
-            </div>
-            <div className="flex flex-row gap-3 w-full mt-2">
-              <button
-                className="flex-1 px-3 py-1.5 rounded-lg bg-[#df242c] text-white text-xs font-semibold hover:bg-[#b81c24] transition-colors"
-                onClick={() => {
-                  setPrivacyAccepted(true);
-                  setPrivacyChecked(true);
-                  setShowPrivacyModal(false);
-                }}
-              >Zustimmen</button>
-              <button
-                className="flex-1 px-3 py-1.5 rounded-lg bg-gray-200 text-gray-700 text-xs font-semibold hover:bg-gray-300 transition-colors"
-                onClick={() => {
-                  setPrivacyAccepted(false);
-                  setPrivacyChecked(false);
-                  setShowPrivacyModal(false);
-                }}
-              >Ablehnen</button>
-            </div>
-          </div>
         </div>
-      )}
+      </div>
     </div>
   )
 }
