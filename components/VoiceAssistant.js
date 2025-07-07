@@ -417,19 +417,18 @@ export default function VoiceAssistant() {
 
   // --- Hilfskomponente für Aktionsbuttons (E-Mail, WhatsApp, Jobbörse) ---
   function ActionButtons({ size = 'sm' }) {
+    // Responsive Button-Width: sm = kompakt (Footer), md = groß (unter Zeige Chat)
     const base = size === 'sm'
-      ? 'flex-1 rounded-2xl px-2 py-1.5 text-xs'
-      : 'flex-1 rounded-2xl px-4 py-2 text-sm'; // px-4/py-2 wie Hauptbutton
+      ? 'flex-shrink-0 whitespace-nowrap min-w-[110px] max-w-[160px] rounded-2xl px-2 py-1.5 text-xs'
+      : 'flex-shrink-0 whitespace-nowrap min-w-[130px] max-w-[200px] rounded-2xl px-4 py-2 text-sm';
     return useMemo(() => (
       <>
         <a href={MAIL_URL} target="_blank" rel="noopener noreferrer"
           className={`${base} bg-[#ededed] text-[#252422] shadow hover:bg-[#df242c] hover:text-white text-center transition-colors flex items-center justify-center`}>
-          {/* Lucide Mail icon, clean and small */}
           <Mail className="inline-block w-4 h-4 mr-1 -mt-0.5 align-middle" strokeWidth={2} /> E-Mail
         </a>
         <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer"
           className={`${base} bg-[#ededed] text-[#252422] shadow hover:bg-[#df242c] hover:text-white text-center transition-colors flex items-center justify-center`}>
-          {/* Clean WhatsApp SVG icon, small and sharp */}
           <svg viewBox="0 0 32 32" width="16" height="16" className="inline-block mr-1 -mt-0.5 align-middle" fill="none" stroke="#25D366" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="16" cy="16" r="14" fill="#fff" stroke="#25D366" strokeWidth="2"/>
             <path d="M10.5 13.5c.5 2 2.5 4.5 5 5.5m0 0c.5.5 1.5 1 2 1m-2-1c.5-.5 1.5-1.5 2-2m-2 2c-1.5-1-3-3-3.5-4.5" stroke="#25D366"/>
@@ -438,7 +437,6 @@ export default function VoiceAssistant() {
         </a>
         <a href={JOB_URL} target="_blank" rel="noopener noreferrer"
           className={`${base} bg-[#ededed] text-[#252422] shadow hover:bg-[#df242c] hover:text-white text-center transition-colors flex items-center justify-center`}>
-          {/* Modern briefcase icon for Jobbörse, small and sharp */}
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="inline-block mr-1 -mt-0.5 align-middle" stroke="#252422" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
             <rect x="3" y="7" width="18" height="13" rx="2.5" fill="#fff"/>
             <path d="M16 7V5a4 4 0 0 0-8 0v2"/>
@@ -765,7 +763,7 @@ export default function VoiceAssistant() {
             </button>
             {/* Aktionsbuttons: nur im zugeklappten Modus unter dem Button sichtbar */}
             {!showChat && (
-              <div className="w-full flex flex-row items-center justify-between gap-2 mt-2 max-w-[420px]">
+              <div className="w-full flex flex-row items-center justify-between gap-2 mt-2 max-w-[420px] overflow-x-auto scrollbar-none pb-1" style={{WebkitOverflowScrolling:'touch'}}>
                 <ActionButtons size="md" />
               </div>
             )}
@@ -834,7 +832,7 @@ export default function VoiceAssistant() {
               </div>
               {/* Aktionsbuttons: im ausgeklappten Modus verkleinert im Footerbereich */}
               {showChat && (
-                <div className="w-full flex flex-row items-center justify-between gap-2 mt-1 pb-1 pt-2 border-t border-gray-100">
+                <div className="w-full flex flex-row items-center justify-between gap-2 mt-1 pb-1 pt-2 border-t border-gray-100 overflow-x-auto scrollbar-none" style={{WebkitOverflowScrolling:'touch'}}>
                   <ActionButtons size="sm" />
                 </div>
               )}
