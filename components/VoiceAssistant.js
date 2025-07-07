@@ -446,13 +446,13 @@ export default function VoiceAssistant() {
   }
 
   return (
-    <div className={`min-h-screen flex flex-col items-center justify-center bg-white p-4${isIframe ? ' min-h-0 h-full' : ''}`}
-         style={isIframe ? { minHeight: '100vh', height: '100vh', padding: 0 } : { paddingLeft: 16, paddingRight: 16, minHeight: '100vh' }}>
+    <div className={`min-h-screen flex flex-col items-center justify-center bg-white pt-2 pb-4 px-4${isIframe ? ' min-h-0 h-full' : ''}`}
+         style={isIframe ? { minHeight: '100vh', height: '100vh', padding: 0 } : { paddingLeft: 16, paddingRight: 16, minHeight: '100vh', paddingTop: 8, paddingBottom: 16 }}>
       <div className={`w-full mx-auto flex flex-col items-center ${isIframe ? 'max-w-full' : 'max-w-sm'}`}
            style={isIframe ? { maxWidth: '100vw' } : { maxWidth: 420, width: '100%' }}>
         {/* Begrüßungstext und Einleitung */}
         <div className="w-full flex flex-col items-center text-center mb-3 px-2">
-          <h2 className="text-lg font-semibold text-[#252422] mb-1">Willkommen beim Job & Azubiberater!</h2>
+          <h2 className="text-2xl font-semibold text-[#252422] mb-1">Willkommen beim Job & Azubiberater!</h2>
           <p className="text-sm text-gray-700 max-w-md leading-snug mb-2" style={{textJustify:'inter-word'}}>
             <b>Anna</b> beantwortet dir alle Fragen rund um Jobs, Ausbildung und Bewerbung bei Mölders – persönlich, unkompliziert und direkt.
           </p>
