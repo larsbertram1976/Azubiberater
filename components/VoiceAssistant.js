@@ -709,8 +709,8 @@ export default function VoiceAssistant() {
                 style={{background:'none',border:'none',padding:0,lineHeight:1}}
               >×</button>
               <div className="text-xs text-gray-800 mb-4 text-center leading-snug">
-                Mit dem Klick auf <b>„Zustimmen“</b> und bei jeder weiteren Interaktion mit diesem KI-Agenten erklärst <b>du</b> dich damit einverstanden, dass <b>deine</b> Kommunikation aufgezeichnet, gespeichert und mit Drittanbietern geteilt wird – wie in der <a href="https://www.moelders.de/datenschutz" target="_blank" rel="noopener noreferrer" className="underline text-[#df242c]">Datenschutzrichtlinie</a> beschrieben.<br /><br />
-                Wenn <b>du</b> nicht möchtest, dass <b>deine</b> Gespräche aufgezeichnet werden, verzichte bitte auf die Nutzung dieses Dienstes.
+                Mit dem Klick auf <b>„Zustimmen“</b> und bei jeder weiteren Interaktion mit diesem KI-Agenten erklärst Du Dich damit einverstanden, dass Deine Kommunikation aufgezeichnet, gespeichert und mit Drittanbietern geteilt wird – wie in der <a href="https://www.moelders.de/datenschutz" target="_blank" rel="noopener noreferrer" className="underline text-[#df242c]">Datenschutzrichtlinie</a> beschrieben.<br /><br />
+                Wenn Du nicht möchtest, dass Deine Gespräche aufgezeichnet werden, verzichte bitte auf die Nutzung dieses Dienstes.
               </div>
               <div className="flex flex-row gap-3 w-full mt-2">
                 <button
