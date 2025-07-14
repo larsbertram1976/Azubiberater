@@ -446,19 +446,37 @@ export default function VoiceAssistant() {
   }
 
   return (
-    <div className={`min-h-screen flex flex-col items-center justify-center bg-white pt-2 pb-4 px-4${isIframe ? ' min-h-0 h-full' : ''}`}
+    <div className={`min-h-screen flex flex-col items-center justify-center bg-white pt-2 pb-4 px-4 relative${isIframe ? ' min-h-0 h-full' : ''}`}
          style={isIframe ? { minHeight: '100vh', height: '100vh', padding: 0 } : { paddingLeft: 16, paddingRight: 16, minHeight: '100vh', paddingTop: 8, paddingBottom: 16 }}>
-      <div className={`w-full mx-auto flex flex-col items-center ${isIframe ? 'max-w-full' : 'max-w-sm'}`}
+      {/* --- LEUCHTTURM Hintergrundbild: Position und Styling --- */}
+      <img src="/public-pics/Leuchtturm.png" alt="Leuchtturm"
+        className="absolute z-0 pointer-events-none select-none opacity-10"
+        style={{
+          width: '40vw',
+          maxWidth: '300px',
+          right: '380px', // Position: noch weiter nach links
+          bottom: '220px', // Position: noch weiter nach oben
+          userSelect: 'none',
+        }}
+      />
+      <div className={`w-full mx-auto flex flex-col items-center ${isIframe ? 'max-w-full' : 'max-w-sm'} relative z-10`}
            style={isIframe ? { maxWidth: '100vw' } : { maxWidth: 420, width: '100%' }}>
         {/* Begrüßungstext und Einleitung */}
         <div className="w-full flex flex-col items-center text-center mb-3 px-2">
           <h2 className="text-2xl font-semibold text-[#252422] mb-1">Willkommen beim Job & Azubiberater!</h2>
-          <p className="text-sm text-gray-700 max-w-md leading-snug mb-2" style={{textJustify:'inter-word'}}>
-            <b>Anna</b> beantwortet dir alle Fragen rund um Jobs, Ausbildung und Bewerbung bei Mölders – persönlich, unkompliziert und direkt.
-          </p>
-          <span className="text-sm text-gray-700 max-w-md leading-snug mb-1">
-            Starte das Gespräch oder nutze die Kontaktmöglichkeiten unten.
-          </span>
+          <div className="w-full max-w-md">
+            <p className="font-bold text-[#df242c] text-base mb-2">Hey – Schön, dass Du da bist!</p>
+            <p className="text-sm text-[#252422] mb-2">
+              Ich bin <span className="font-bold text-[#df242c]">Anna</span>, eure <span className="font-bold text-[#df242c]">KI-Azubiberaterin</span> und die digitale Schwester unserer Personalreferentin und Ausbildungsleiterin.<br />
+              Seit Mai 2019 ist <span className="font-bold text-[#df242c]">Anna</span> bei Mölders eure Ansprechpartnerin für alle Fragen rund um Ausbildung und Karriere.
+            </p>
+            <p className="text-sm text-[#252422] mb-2">
+              Anna freut sich darauf, euch persönlich, unkompliziert und direkt zu unterstützen.
+            </p>
+            <p className="text-sm text-[#252422] mb-1">
+              Starte das Gespräch oder nutz die Kontaktmöglichkeiten unten.
+            </p>
+          </div>
         </div>
         {/* Agenten-Auswahl: Anna oder Joshua */}
         <style jsx global>{`
@@ -640,7 +658,7 @@ export default function VoiceAssistant() {
                 style={{height:'48px', minWidth:0, width: '100%', maxWidth: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position:'relative'}}
               >
                 <span className="w-full text-center block" style={{marginRight: '40px'}}>
-                  {isActive ? 'Gespräch beenden' : `Gespräch mit ${selectedAgent === 'anna' ? 'Anna' : 'Joshua'} starten`}
+                  {isActive ? 'Gespräch beenden' : `Gespräch mit KI-Anna starten`}
                 </span>
                 {/* Status-Kreis bündig am rechten Rand, IM BUTTON, NICHT ABSOLUT! */}
                 <span
