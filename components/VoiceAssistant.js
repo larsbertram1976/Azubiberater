@@ -463,9 +463,9 @@ export default function VoiceAssistant() {
            style={isIframe ? { maxWidth: '100vw' } : { maxWidth: 420, width: '100%' }}>
         {/* Begrüßungstext und Einleitung */}
         <div className="w-full flex flex-col items-center text-center mb-3 px-2">
-          <h2 className="text-2xl font-semibold text-[#252422] mb-1">Willkommen beim Job & Azubiberater!</h2>
+          <h2 className="text-2xl font-semibold text-[#df242c] mb-1">Hey – Schön, dass Du da bist!</h2>
           <div className="w-full max-w-md">
-            <p className="font-bold text-[#df242c] text-base mb-2">Hey – Schön, dass Du da bist!</p>
+           
             <p className="text-sm text-[#252422] mb-2">
               Ich bin <span className="font-bold text-[#df242c]">Anna</span>, eure <span className="font-bold text-[#df242c]">KI-Azubiberaterin</span> und die digitale Schwester unserer Personalreferentin und Ausbildungsleiterin.<br />
               Seit Mai 2019 ist <span className="font-bold text-[#df242c]">Anna</span> bei Mölders eure Ansprechpartnerin für alle Fragen rund um Ausbildung und Karriere.
