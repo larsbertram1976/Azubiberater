@@ -454,8 +454,8 @@ export default function VoiceAssistant() {
         style={{
           width: '40vw',
           maxWidth: '300px',
-          right: '380px', // Position: noch weiter nach links
-          bottom: '220px', // Position: noch weiter nach oben
+          right: '380px',
+          bottom: '220px',
           userSelect: 'none',
         }}
       />
@@ -463,7 +463,7 @@ export default function VoiceAssistant() {
            style={isIframe ? { maxWidth: '100vw' } : { maxWidth: 420, width: '100%' }}>
         {/* Begrüßungstext und Einleitung */}
         <div className="w-full flex flex-col items-center text-center mb-3 px-2">
-          <h2 className="text-2xl font-semibold text-[#df242c] mb-1">Hey – Schön, dass Du da bist!</h2>
+          <h2 className="text-2xl font-semibold text-[#df242c] mb-4">Hey – Schön, dass Du da bist!</h2>
           <div className="w-full max-w-md">
            
             <p className="text-sm text-[#252422] mb-2">
