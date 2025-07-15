@@ -219,46 +219,47 @@ export default function VoiceAssistant() {
   const handleSend = useCallback(async () => {
     const text = inputValue.trim();
     if (!text || !conversation || connectionStatus !== 'connected') {
-      console.warn('[DEBUG] handleSend: Kein Text, keine Conversation oder nicht verbunden', { text, conversation, connectionStatus });
+      console.warn('[DEBUG] handleSend: Kein Text, keine Conversation oder nicht verbunden', {text, conversation, connectionStatus});
       return;
     }
-
     setMessages((prev) => [
       ...prev,
-      { source: 'user', message: text },
+      { source: "user", message: text },
     ]);
-    setInputValue('');
+    setInputValue("");
     setPendingAgentMessage(true);
-
     try {
+      // Versuche immer zuerst das SDK (Conversation-Objekt)
       if (typeof conversation.send === 'function') {
         try {
+          console.log('[DEBUG] conversation object:', conversation);
+          console.log('[DEBUG] conversation.send exists:', typeof conversation.send);
+          console.log('[DEBUG] Sende an conversation.send:', { input: text });
           const sendResult = await conversation.send({ input: text });
           console.log('[DEBUG] conversation.send result:', sendResult);
+          // Die Antwort wird über onMessage verarbeitet
         } catch (err) {
           console.error('[DEBUG] conversation.send({ input }) fehlgeschlagen', err);
-          setMessages((prev) => [
-            ...prev,
-            { source: 'agent', message: '[Fehler: conversation/send nicht verfügbar]' },
-          ]);
+          alert('Fehler: Die Nachricht konnte nicht an den Agenten gesendet werden.');
+          setPendingAgentMessage(false);
         }
       } else if (signedUrl && conversationId) {
+        // REST fallback (korrekter Endpoint!)
         const fallbackUrl = `https://api.elevenlabs.io/v1/conversations/${conversationId}/interact`;
         try {
           const response = await fetch(fallbackUrl, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'xi-api-key': process.env.ELEVEN_LABS_API_KEY,
+              'xi-api-key': process.env.NEXT_PUBLIC_ELEVEN_LABS_API_KEY || process.env.ELEVEN_LABS_API_KEY || '',
             },
-            body: JSON.stringify({ text }),
+            body: JSON.stringify({ input: text })
           });
-
           if (!response.ok) {
-            throw new Error(`REST-Fallback: Antwort nicht OK: ${response.status}`);
+            throw new Error('REST-Fallback: Antwort nicht OK: ' + response.status);
           }
-
           const data = await response.json();
+          console.log('[DEBUG] REST-Fallback Antwort:', data);
           if (data && (data.response || data.message)) {
             setMessages((prev) => [
               ...prev,
@@ -271,28 +272,23 @@ export default function VoiceAssistant() {
             ]);
           }
         } catch (errRest) {
-          console.error('[DEBUG] REST-Fallback fehlgeschlagen:', errRest);
           setMessages((prev) => [
             ...prev,
             { source: 'agent', message: '[Fehler bei der Agenten-Antwort]' },
           ]);
         }
+        setPendingAgentMessage(false);
       } else {
-        console.error('[DEBUG] Kein signedUrl oder conversationId für REST-Fallback verfügbar');
         setMessages((prev) => [
           ...prev,
-          { source: 'agent', message: '[Fehler: REST-Fallback nicht verfügbar]' },
+          { source: 'agent', message: '[Fehler: conversation/send nicht verfügbar]' },
         ]);
+        setPendingAgentMessage(false);
       }
     } catch (err) {
-      console.error('[DEBUG] Fehler beim Senden an den Agenten:', err);
-      alert(`Fehler beim Senden an den Agenten: ${err?.message || err}`);
-      setMessages((prev) => [
-        ...prev,
-        { source: 'agent', message: '[Fehler bei der Agenten-Antwort]' },
-      ]);
-    } finally {
       setPendingAgentMessage(false);
+      console.error('[DEBUG] Fehler beim Senden an den Agenten:', err);
+      alert('Fehler beim Senden an den Agenten: ' + (err?.message || err));
     }
   }, [inputValue, conversation, connectionStatus, signedUrl, conversationId])
 
@@ -458,8 +454,8 @@ export default function VoiceAssistant() {
         style={{
           width: '40vw',
           maxWidth: '300px',
-          right: '380px',
-          bottom: '220px',
+          right: '380px', // Position: noch weiter nach links
+          bottom: '220px', // Position: noch weiter nach oben
           userSelect: 'none',
         }}
       />
@@ -467,7 +463,7 @@ export default function VoiceAssistant() {
            style={isIframe ? { maxWidth: '100vw' } : { maxWidth: 420, width: '100%' }}>
         {/* Begrüßungstext und Einleitung */}
         <div className="w-full flex flex-col items-center text-center mb-3 px-2">
-          <h2 className="text-2xl font-semibold text-[#df242c] mb-4">Hey – Schön, dass Du da bist!</h2>
+          <h2 className="text-2xl font-semibold text-[#df242c] mb-1">Hey – Schön, dass Du da bist!</h2>
           <div className="w-full max-w-md">
            
             <p className="text-sm text-[#252422] mb-2">
@@ -808,27 +804,27 @@ export default function VoiceAssistant() {
                 )}
               </div>
               {/* Text-Eingabe und Senden (deaktiviert) */}
-              <div className="w-full flex flex-row items-center gap-2 mb-2" style={{ display: 'none' }}>
-                <form className="w-full flex flex-row items-center gap-2 mb-2" onSubmit={e => { e.preventDefault(); handleSend(); }} autoComplete="off">
-                  <input
-                    type="text"
-                    className="flex-grow rounded-xl border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-[#df242c] bg-white"
-                    placeholder="Deine Nachricht ..."
-                    value={inputValue}
-                    onChange={e => setInputValue(e.target.value)}
-                    style={{ minWidth: 0 }}
-                    disabled
-                  />
-                  <button
-                    type="submit"
-                    className="rounded-xl px-3 py-2 bg-[#df242c] text-white font-semibold text-sm shadow hover:bg-[#b81c24] transition-colors"
-                    aria-label="Senden"
-                    disabled
-                  >
-                    <MessageCircle className="w-5 h-5" />
-                  </button>
-                </form>
-              </div>
+              {/*
+              <form className="w-full flex flex-row items-center gap-2 mb-2" onSubmit={e => {e.preventDefault(); handleSend();}} autoComplete="off">
+                <input
+                  type="text"
+                  className="flex-grow rounded-xl border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-[#df242c] bg-white"
+                  placeholder="Deine Nachricht ..."
+                  value={inputValue}
+                  onChange={e => setInputValue(e.target.value)}
+                  disabled
+                  style={{minWidth:0}}
+                />
+                <button
+                  type="submit"
+                  className="rounded-xl px-3 py-2 bg-[#df242c] text-white font-semibold text-sm shadow hover:bg-[#b81c24] transition-colors disabled:opacity-50"
+                  disabled
+                  aria-label="Senden"
+                >
+                  <MessageCircle className="w-5 h-5" />
+                </button>
+              </form>
+              */}
               {/* Download Button: jetzt volle Breite unterhalb der Aktionsbuttons */}
               <div className="w-full flex flex-row justify-center mb-3 mt-2">
                 <button
