@@ -728,7 +728,8 @@ export default function VoiceAssistant() {
               >×</button>
               <div className="text-xs text-gray-800 mb-4 text-center leading-snug">
                 Mit dem Klick auf <b>„Zustimmen“</b> und bei jeder weiteren Interaktion mit diesem KI-Agenten erklärst Du Dich damit einverstanden, dass Deine Kommunikation aufgezeichnet, gespeichert und mit Drittanbietern geteilt wird – wie in der <a href="https://www.moelders.de/datenschutz" target="_blank" rel="noopener noreferrer" className="underline text-[#df242c]">Datenschutzrichtlinie</a> beschrieben.<br /><br />
-                Wenn Du nicht möchtest, dass Deine Gespräche aufgezeichnet werden, verzichte bitte auf die Nutzung dieses Dienstes.
+                Wenn Du nicht möchtest, dass Deine Gespräche aufgezeichnet werden, verzichte bitte auf die Nutzung dieses Dienstes.<br /><br />
+                <b>Hinweis für Jugendliche:</b> Wenn Du 14 Jahre alt bist oder jünger, bitte nimm Deine Eltern dazu, damit sie Dich beraten können.
               </div>
               <div className="flex flex-row gap-3 w-full mt-2">
                 <button
