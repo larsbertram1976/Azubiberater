@@ -113,9 +113,12 @@ export default function VoiceAssistant() {
   const startConversation = useCallback(async () => {
     try {
       setConnectionStatus('connecting')
+      console.log('[DEBUG] Datenschutz:', privacyChecked, privacyAccepted)
       // Agenten-ID je nach Auswahl
       const agentId = AGENT_IDS[selectedAgent] || AGENT_IDS.moeldi
+      console.log('[DEBUG] AgentId:', agentId)
       const { signedUrl } = await getSignedUrl(agentId)
+      console.log('[DEBUG] getSignedUrl result:', signedUrl)
       if (!signedUrl) {
         alert('Fehler: Es konnte keine Verbindung zum Agenten hergestellt werden. Bitte prüfe deine API-Konfiguration.');
         setConnectionStatus('disconnected')
@@ -123,14 +126,11 @@ export default function VoiceAssistant() {
       }
       setSignedUrl(signedUrl); // Save for REST fallback
       console.log('[DEBUG] Starte Conversation mit signedUrl:', signedUrl)
-
       // Determine if agent is text-only (future: dynamic, for now hardcoded)
       const isTextOnlyAgent = false; // Set to true if you have a text-only agent
-
       // Only set text_only if agent is truly text-only
       const sessionOptions = {
         signedUrl,
-        // input_mode: isTextOnlyAgent ? 'text' : undefined, // Let SDK default for both
         ...(isTextOnlyAgent ? {
           input_mode: 'text',
           conversation_config_override: { conversation: { text_only: true } }
@@ -158,9 +158,7 @@ export default function VoiceAssistant() {
           )
         },
         onModeChange: (mode) => {
-          // Robust debug output for troubleshooting
           console.log('[DEBUG] onModeChange event received:', mode);
-          // Defensive: handle both string and object
           let modeValue = mode && typeof mode === 'object' ? mode.mode : mode;
           if (modeValue === 'speaking') {
             setIsSpeaking(true);
@@ -171,7 +169,7 @@ export default function VoiceAssistant() {
         },
       }
       const conv = await Conversation.startSession(sessionOptions)
-      // Store conversationId from SDK instance if available
+      console.log('[DEBUG] Conversation.startSession result:', conv)
       let cid = null;
       if (conv) {
         if (conv.conversationId) cid = conv.conversationId;
@@ -190,14 +188,14 @@ export default function VoiceAssistant() {
       setConversation(conv)
       setIsActive(true)
       setConnectionStatus('connected')
-      // Recognition erzeugen und ggf. starten
       if (!recognitionRef.current) createRecognition()
       startMic()
     } catch (error) {
       console.error('Failed to start conversation:', error)
+      alert('Fehler beim Starten des Gesprächs: ' + (error?.message || error))
       setConnectionStatus('disconnected')
     }
-  }, [selectedAgent])
+  }, [selectedAgent, privacyChecked, privacyAccepted])
 
   // Beende Conversation und Recognition
   const endConversation = useCallback(async () => {
