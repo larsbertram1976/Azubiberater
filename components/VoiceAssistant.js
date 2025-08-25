@@ -7,8 +7,8 @@ import { Mic, MicOff, MessageCircle, Bot, User, Download, Mail } from 'lucide-re
 import { Badge } from '@/components/ui/badge'
 import { downloadTranscript } from '@/utils/transcript'
 import { Conversation } from '@elevenlabs/client'
-import { getSignedUrl } from '@/app/actions/getSignedUrl'
 import getConfig from 'next/config'
+import { getSignedUrl } from '@/app/actions/getSignedUrl'
 
 const { publicRuntimeConfig } = getConfig?.() || {}
 
@@ -117,6 +117,7 @@ export default function VoiceAssistant() {
       // Agenten-ID je nach Auswahl
       const agentId = AGENT_IDS[selectedAgent] || AGENT_IDS.moeldi
       console.log('[DEBUG] AgentId:', agentId)
+      // Ursprünglicher Aufruf der Server-Action
       const { signedUrl } = await getSignedUrl(agentId)
       console.log('[DEBUG] getSignedUrl result:', signedUrl)
       if (!signedUrl) {
@@ -704,9 +705,9 @@ export default function VoiceAssistant() {
                 style={{background:'none',border:'none',padding:0,lineHeight:1}}
               >×</button>
               <div className="text-xs text-gray-800 mb-4 text-center leading-snug">
-                Mit dem Klick auf <b>„Zustimmen“</b> und bei jeder weiteren Interaktion mit diesem KI-Agenten erklärst Du Dich damit einverstanden, dass Deine Eingaben aufgezeichnet, gespeichert und durch KI-Technologie ausgewertet werden.<br /><br />
-                Die Inhalte können intern oder mit ausgewählten Partnern geteilt werden, um passende Lösungsideen zu entwickeln – wie in der <a href="https://www.moelders.de/datenschutz" target="_blank" rel="noopener noreferrer" className="underline text-[#df242c]">Datenschutzrichtlinie</a> beschrieben.<br /><br />
-                Wenn Du nicht möchtest, dass Deine Eingaben verarbeitet werden, verzichte bitte auf die Nutzung dieses Dienstes – oder sende uns Deine Idee alternativ per E-Mail. Den Button dazu findest Du unten.
+                Mit dem Klick auf <b>„Zustimmen“</b> erklärst Du Dich damit einverstanden, dass Deine Eingaben aufgezeichnet und durch KI-Technologie ausgewertet werden.<br /><br />
+                Die Inhalte werden ausschließlich intern verwendet, um passende Lösungsideen zu entwickeln – wie in der <a href="https://www.moelders.de/datenschutz" target="_blank" rel="noopener noreferrer" className="underline text-[#df242c]">Datenschutzrichtlinie</a> beschrieben.<br /><br />
+                Wenn Du nicht möchtest, dass Deine Eingaben verarbeitet werden, verzichte bitte auf die Nutzung dieses Dienstes.
               </div>
               <div className="flex flex-row gap-3 w-full mt-2">
                 <button
