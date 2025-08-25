@@ -417,31 +417,15 @@ export default function VoiceAssistant() {
 
   // --- Hilfskomponente für Aktionsbuttons (E-Mail, WhatsApp, Jobbörse) ---
   function ActionButtons({ size = 'sm' }) {
-    // Noch kompakter: kleinere Höhe, kleinere Schrift, kleinere Icons
-    const base = size === 'sm'
-      ? 'flex flex-row items-center justify-center flex-1 min-w-0 px-1 py-1 text-[11px] font-normal rounded-2xl h-8 whitespace-nowrap gap-1'
-      : 'flex flex-row items-center justify-center w-1/3 min-w-0 px-2 py-2 text-xs font-normal rounded-2xl h-9 whitespace-nowrap gap-1.5';
+    // Nur E-Mail Button, volle Breite wie Chatfenster-Button
+    const base = 'w-full flex items-center justify-center px-4 py-2 text-sm font-normal rounded-2xl h-12 whitespace-nowrap gap-2 bg-[#ededed] text-[#252422] shadow hover:bg-[#df242c] hover:text-white text-center transition-colors';
     return (
-      <>
-        <a href={MAIL_URL} target="_blank" rel="noopener noreferrer"
-          className={`${base} bg-[#ededed] text-[#252422] shadow hover:bg-[#df242c] hover:text-white text-center transition-colors mx-0.5`}
-          style={{lineHeight:'1.1'}}>
-          <Mail className="w-[13px] h-[13px]" strokeWidth={1.5} />
-          <span className="leading-none">E-Mail</span>
-        </a>
-        <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer"
-          className={`${base} bg-[#ededed] text-[#252422] shadow hover:bg-[#df242c] hover:text-white text-center transition-colors mx-0.5`}
-          style={{lineHeight:'1.1'}}>
-          <svg viewBox="0 0 32 32" width="13" height="13" fill="none" stroke="#25D366" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="inline-block align-middle"><circle cx="16" cy="16" r="14" fill="#fff" stroke="#25D366" strokeWidth="1.5"/><path d="M10.5 13.5c.5 2 2.5 4.5 5 5.5m0 0c.5.5 1.5 1 2 1m-2-1c.5-.5 1.5-1.5 2-2m-2 2c-1.5-1-3-3-3.5-4.5" stroke="#25D366"/></svg>
-          <span className="leading-none">WhatsApp</span>
-        </a>
-        <a href={JOB_URL} target="_blank" rel="noopener noreferrer"
-          className={`${base} bg-[#ededed] text-[#252422] shadow hover:bg-[#df242c] hover:text-white text-center transition-colors mx-0.5`}
-          style={{lineHeight:'1.1'}}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#252422" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" className="inline-block align-middle"><rect x="3" y="7" width="18" height="13" rx="2.5" fill="#fff"/><path d="M16 7V5a4 4 0 0 0-8 0v2"/><path d="M3 12h18"/></svg>
-          <span className="leading-none">Jobbörse</span>
-        </a>
-      </>
+      <a href={MAIL_URL} target="_blank" rel="noopener noreferrer"
+        className={base}
+        style={{lineHeight:'1.1', maxWidth: '420px'}}>
+        <Mail className="w-[18px] h-[18px] mr-2" strokeWidth={1.8} />
+        <span className="leading-none">E-Mail senden</span>
+      </a>
     );
   }
 
@@ -463,18 +447,13 @@ export default function VoiceAssistant() {
            style={isIframe ? { maxWidth: '100vw' } : { maxWidth: 420, width: '100%' }}>
         {/* Begrüßungstext und Einleitung */}
         <div className="w-full flex flex-col items-center text-center mb-3 px-2">
-          <h2 className="text-2xl font-semibold text-[#df242c] mb-1">Hey – Schön, dass Du da bist!</h2>
+          <h2 className="text-2xl font-semibold text-[#df242c] mb-1">Hey – Deine Idee zählt!</h2>
           <div className="w-full max-w-md">
-           
             <p className="text-sm text-[#252422] mb-2">
-              Ich bin <span className="font-bold text-[#df242c]">Möldi</span>, eure <span className="font-bold text-[#df242c]">KI-Azubiberaterin</span> und die digitale Schwester unserer Personalreferentin und Ausbildungsleiterin.<br />
-              Seit Mai 2019 ist <span className="font-bold text-[#df242c]">Möldi</span> bei Mölders eure Ansprechpartnerin für alle Fragen rund um Ausbildung und Karriere.
-            </p>
-            <p className="text-sm text-[#252422] mb-2">
-              Möldi freut sich darauf, euch persönlich, unkompliziert und direkt zu unterstützen.
-            </p>
-            <p className="text-sm text-[#252422] mb-1">
-              Starte das Gespräch oder nutz die Kontaktmöglichkeiten unten.
+              Ich bin <span className="font-bold text-[#df242c]">Möldi</span>, euer digitaler Ideenassistent bei Mölders.<br />
+              Teile mit mir, was dich im Alltag nervt oder wo du Potenzial für Verbesserung siehst – ob klein oder groß.<br />
+              Auf Basis deines Inputs entwickeln wir mit KI passende Lösungsansätze – schnell und konkret.<br />
+              Starte jetzt das Gespräch und mach Mölders gemeinsam mit uns smarter!
             </p>
           </div>
         </div>
@@ -597,7 +576,7 @@ export default function VoiceAssistant() {
                 disabled={false}
               >
                 <img
-                  src="/public-pics/anna.jpg"
+                  src="/public-pics/Moeldi.png"
                   alt="Möldi, Azubiberaterin"
                   className={`object-cover shadow rounded-full border-4 border-[#df242c] transition-all duration-300 relative w-44 h-44 z-10${isSpeaking ? ' animate-profile-pulse' : ''}`}
                   style={{willChange: 'transform'}}
@@ -727,9 +706,9 @@ export default function VoiceAssistant() {
                 style={{background:'none',border:'none',padding:0,lineHeight:1}}
               >×</button>
               <div className="text-xs text-gray-800 mb-4 text-center leading-snug">
-                Mit dem Klick auf <b>„Zustimmen“</b> und bei jeder weiteren Interaktion mit diesem KI-Agenten erklärst Du Dich damit einverstanden, dass Deine Kommunikation aufgezeichnet, gespeichert und mit Drittanbietern geteilt wird – wie in der <a href="https://www.moelders.de/datenschutz" target="_blank" rel="noopener noreferrer" className="underline text-[#df242c]">Datenschutzrichtlinie</a> beschrieben.<br /><br />
-                Wenn Du nicht möchtest, dass Deine Gespräche aufgezeichnet werden, verzichte bitte auf die Nutzung dieses Dienstes.<br /><br />
-                <b>Hinweis für Jugendliche:</b> Wenn Du 14 Jahre alt bist oder jünger, bitte nimm Deine Eltern dazu, damit sie Dich beraten können.
+                Mit dem Klick auf <b>„Zustimmen“</b> und bei jeder weiteren Interaktion mit diesem KI-Agenten erklärst Du Dich damit einverstanden, dass Deine Eingaben aufgezeichnet, gespeichert und durch KI-Technologie ausgewertet werden.<br /><br />
+                Die Inhalte können intern oder mit ausgewählten Partnern geteilt werden, um passende Lösungsideen zu entwickeln – wie in der <a href="https://www.moelders.de/datenschutz" target="_blank" rel="noopener noreferrer" className="underline text-[#df242c]">Datenschutzrichtlinie</a> beschrieben.<br /><br />
+                Wenn Du nicht möchtest, dass Deine Eingaben verarbeitet werden, verzichte bitte auf die Nutzung dieses Dienstes – oder sende uns Deine Idee alternativ per E-Mail. Den Button dazu findest Du unten.
               </div>
               <div className="flex flex-row gap-3 w-full mt-2">
                 <button
