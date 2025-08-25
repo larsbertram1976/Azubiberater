@@ -13,7 +13,7 @@ import getConfig from 'next/config'
 const { publicRuntimeConfig } = getConfig?.() || {}
 
 const AGENT_IDS = {
-  anna: process.env.NEXT_PUBLIC_AGENT_ID_ANNA,
+  moeldi: process.env.NEXT_PUBLIC_AGENT_ID_MOELDI,
   joshua: process.env.NEXT_PUBLIC_AGENT_ID_JOSHUA,
 }
 
@@ -36,7 +36,7 @@ export default function VoiceAssistant() {
   const [showPrivacyModal, setShowPrivacyModal] = useState(false)
   const [privacyAccepted, setPrivacyAccepted] = useState(false)
   const [pendingAgentMessage, setPendingAgentMessage] = useState(false)
-  const [selectedAgent, setSelectedAgent] = useState('anna') // 'anna' oder 'joshua'
+  const [selectedAgent, setSelectedAgent] = useState('moeldi') // 'moeldi' oder 'joshua'
   const scrollAreaRef = useRef(null)
   const recognitionRef = useRef(null)
 
@@ -114,7 +114,7 @@ export default function VoiceAssistant() {
     try {
       setConnectionStatus('connecting')
       // Agenten-ID je nach Auswahl
-      const agentId = AGENT_IDS[selectedAgent] || AGENT_IDS.anna
+      const agentId = AGENT_IDS[selectedAgent] || AGENT_IDS.moeldi
       const { signedUrl } = await getSignedUrl(agentId)
       if (!signedUrl) {
         alert('Fehler: Es konnte keine Verbindung zum Agenten hergestellt werden. Bitte prüfe deine API-Konfiguration.');
@@ -467,18 +467,18 @@ export default function VoiceAssistant() {
           <div className="w-full max-w-md">
            
             <p className="text-sm text-[#252422] mb-2">
-              Ich bin <span className="font-bold text-[#df242c]">Anna</span>, eure <span className="font-bold text-[#df242c]">KI-Azubiberaterin</span> und die digitale Schwester unserer Personalreferentin und Ausbildungsleiterin.<br />
-              Seit Mai 2019 ist <span className="font-bold text-[#df242c]">Anna</span> bei Mölders eure Ansprechpartnerin für alle Fragen rund um Ausbildung und Karriere.
+              Ich bin <span className="font-bold text-[#df242c]">Möldi</span>, eure <span className="font-bold text-[#df242c]">KI-Azubiberaterin</span> und die digitale Schwester unserer Personalreferentin und Ausbildungsleiterin.<br />
+              Seit Mai 2019 ist <span className="font-bold text-[#df242c]">Möldi</span> bei Mölders eure Ansprechpartnerin für alle Fragen rund um Ausbildung und Karriere.
             </p>
             <p className="text-sm text-[#252422] mb-2">
-              Anna freut sich darauf, euch persönlich, unkompliziert und direkt zu unterstützen.
+              Möldi freut sich darauf, euch persönlich, unkompliziert und direkt zu unterstützen.
             </p>
             <p className="text-sm text-[#252422] mb-1">
               Starte das Gespräch oder nutz die Kontaktmöglichkeiten unten.
             </p>
           </div>
         </div>
-        {/* Agenten-Auswahl: Anna oder Joshua */}
+        {/* Agenten-Auswahl: Möldi oder Joshua */}
         <style jsx global>{`
           @keyframes pulse-spin-slow {
             0% { transform: rotate(0deg) scale(1); opacity: 0.18; }
@@ -548,7 +548,7 @@ export default function VoiceAssistant() {
         `}</style>
         <div className="flex flex-col items-center gap-2 mb-8 w-full">
           <div className="flex flex-row items-center justify-center gap-8 relative">
-            {/* Anna (einziger Agent) */}
+            {/* Möldi (einziger Agent) */}
             <div className="relative flex flex-col items-center justify-center" style={{minWidth: '8rem', minHeight: '8rem'}}>
               {/* Canvas Glow Effekt */}
               <canvas
@@ -587,22 +587,22 @@ export default function VoiceAssistant() {
                   if (!isActive && privacyChecked) {
                     startConversation();
                   } else {
-                    setSelectedAgent('anna');
+                    setSelectedAgent('moeldi');
                   }
                 }}
                 className={`flex flex-col items-center focus:outline-none transition-all duration-200 relative z-10 ${privacyChecked && !isActive ? 'cursor-pointer' : 'cursor-default'}`}
-                aria-label="Anna auswählen"
+                aria-label="Möldi auswählen"
                 type="button"
                 style={{ background: 'none', border: 'none', padding: 0 }}
                 disabled={false}
               >
                 <img
                   src="/public-pics/anna.jpg"
-                  alt="Anna, Azubiberaterin"
+                  alt="Möldi, Azubiberaterin"
                   className={`object-cover shadow rounded-full border-4 border-[#df242c] transition-all duration-300 relative w-44 h-44 z-10${isSpeaking ? ' animate-profile-pulse' : ''}`}
                   style={{willChange: 'transform'}}
                 />
-                {/* Anna-Sticker noch weiter nach rechts (fast am Rand), größere Schrift */}
+                {/* Möldi-Sticker noch weiter nach rechts (fast am Rand), größere Schrift */}
                 <span
                   className="absolute left-[99%] top-6 bg-[#df242c] text-white text-sm font-semibold px-5 py-1 rounded-full shadow-lg border-2 border-white z-20"
                   style={{
@@ -611,7 +611,7 @@ export default function VoiceAssistant() {
                     boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
                   }}
                 >
-                  Anna
+                  Möldi
                 </span>
               </button>
             </div>
@@ -650,7 +650,7 @@ export default function VoiceAssistant() {
                 whileTap={{ scale: 0.97 }}
                 onClick={isActive ? endConversation : startConversation}
                 className={`pr-4 pl-6 py-2 rounded-2xl text-base font-semibold shadow-md transition-all duration-200 focus:outline-none flex-grow flex-shrink flex items-center justify-between relative w-full`
-                  + (isActive ? ' border border-[#df242c] text-[#df242c] bg-white hover:bg-[#df242c] hover:text-white' : selectedAgent === 'anna' ? ' bg-[#df242c] text-white hover:bg-[#b81c24]' : ' bg-[#028e4a] text-white hover:bg-[#026c39]')
+                  + (isActive ? ' border border-[#df242c] text-[#df242c] bg-white hover:bg-[#df242c] hover:text-white' : selectedAgent === 'moeldi' ? ' bg-[#df242c] text-white hover:bg-[#b81c24]' : ' bg-[#028e4a] text-white hover:bg-[#026c39]')
                   + (!privacyChecked && !isActive ? ' opacity-50 cursor-not-allowed' : '')}
                 aria-label={isActive ? 'Gespräch beenden' : 'Gespräch starten'}
                 disabled={!privacyChecked && !isActive}
@@ -658,7 +658,7 @@ export default function VoiceAssistant() {
                 style={{height:'48px', minWidth:0, width: '100%', maxWidth: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position:'relative'}}
               >
                 <span className="w-full text-center block" style={{marginRight: '40px'}}>
-                  {isActive ? 'Gespräch beenden' : `Gespräch mit KI-Anna starten`}
+                  {isActive ? 'Gespräch beenden' : `Gespräch mit KI-Möldi starten`}
                 </span>
                 {/* Status-Kreis bündig am rechten Rand, IM BUTTON, NICHT ABSOLUT! */}
                 <span
@@ -782,7 +782,7 @@ export default function VoiceAssistant() {
               {/* Chatfenster */}
               <div className="w-full bg-white rounded-2xl shadow-lg border border-gray-200 p-4 mb-4 max-h-[320px] min-h-[120px] overflow-y-auto text-sm" ref={scrollAreaRef} style={{minHeight:120, maxHeight:320}}>
                 {messages.length === 0 ? (
-                  <div className="text-gray-400 text-center py-8 select-none">Hier erscheint dein Chatverlauf mit Anna.</div>
+                  <div className="text-gray-400 text-center py-8 select-none">Hier erscheint dein Chatverlauf mit Möldi.</div>
                 ) : (
                   messages.map((msg, idx) => (
                     <div key={idx} className={`mb-2 flex ${msg.source === 'user' ? 'justify-end' : 'justify-start'}`}> 
@@ -800,7 +800,7 @@ export default function VoiceAssistant() {
                 )}
                 {pendingAgentMessage && (
                   <div className="flex justify-start mb-2">
-                    <div className="px-3 py-2 rounded-xl bg-gray-100 text-[#252422] max-w-[80%] animate-pulse">Anna schreibt ...</div>
+                    <div className="px-3 py-2 rounded-xl bg-gray-100 text-[#252422] max-w-[80%] animate-pulse">Möldi schreibt ...</div>
                   </div>
                 )}
               </div>
