@@ -14,7 +14,7 @@ const { publicRuntimeConfig } = getConfig?.() || {}
 
 const AGENT_IDS = {
   moeldi: process.env.NEXT_PUBLIC_AGENT_ID_MOELDI,
-  joshua: process.env.NEXT_PUBLIC_AGENT_ID_JOSHUA,
+
 }
 
 let recognitionGlobal = null // global fallback for SpeechRecognition
