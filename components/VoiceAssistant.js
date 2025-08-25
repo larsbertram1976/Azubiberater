@@ -21,8 +21,6 @@ let recognitionGlobal = null // global fallback for SpeechRecognition
 
 // --- Konstanten für Kontakt-Links ---
 const MAIL_URL = "mailto:azubianfragen@moelders.de?subject=Anfrage%20Azubiberatung";
-const WHATSAPP_URL = "https://wa.me/4915123456789";
-const JOB_URL = "https://www.moelders.de/unternehmen/jobboerse";
 
 export default function VoiceAssistant() {
   const [conversation, setConversation] = useState(null)
@@ -414,10 +412,9 @@ export default function VoiceAssistant() {
     }
   }, [conversation, isMuted])
 
-  // --- Hilfskomponente für Aktionsbuttons (E-Mail, WhatsApp, Jobbörse) ---
+  // --- Hilfskomponente für Aktionsbuttons (E-Mail) ---
   function ActionButtons({ size = 'sm' }) {
     // Nur E-Mail Button, volle Breite wie Chatfenster-Button
-<<<<<<< HEAD
     const base = 'w-full flex items-center justify-center px-4 py-2 text-sm font-normal rounded-2xl h-12 whitespace-nowrap gap-2 bg-[#ededed] text-[#252422] shadow hover:bg-[#df242c] hover:text-white text-center transition-colors';
     return (
       <a href={MAIL_URL} target="_blank" rel="noopener noreferrer"
@@ -425,15 +422,6 @@ export default function VoiceAssistant() {
         style={{lineHeight:'1.1', maxWidth: '420px'}}>
         <Mail className="w-[18px] h-[18px] mr-2" strokeWidth={1.8} />
         <span className="leading-none">E-Mail senden</span>
-=======
-    const base = 'flex flex-row items-center justify-center w-full min-w-0 px-2 py-2 text-xs font-normal rounded-2xl h-9 whitespace-nowrap gap-1.5';
-    return (
-      <a href={MAIL_URL} target="_blank" rel="noopener noreferrer"
-        className={`${base} bg-[#ededed] text-[#252422] shadow hover:bg-[#df242c] hover:text-white text-center transition-colors mx-0.5`}
-        style={{lineHeight:'1.1'}}>
-        <Mail className="w-[13px] h-[13px] mr-2" strokeWidth={1.5} />
-        <span className="leading-none">E-Mail</span>
->>>>>>> 3983843 (Implement code changes to enhance functionality and improve performance)
       </a>
     );
   }
@@ -460,17 +448,8 @@ export default function VoiceAssistant() {
           <div className="w-full max-w-md">
             <p className="text-sm text-[#252422] mb-2">
               Ich bin <span className="font-bold text-[#df242c]">Möldi</span>, euer digitaler Ideenassistent bei Mölders.<br />
-<<<<<<< HEAD
               Teile mit mir, was dich im Alltag nervt oder wo du Potenzial für Verbesserung siehst – ob klein oder groß.<br />
               Auf Basis deines Inputs entwickeln wir mit KI passende Lösungsansätze – schnell und konkret.<br />
-=======
-              Teile mit mir, was dich im Alltag nervt oder wo du Potenzial für Verbesserung siehst – ob klein oder groß.
-            </p>
-            <p className="text-sm text-[#252422] mb-2">
-              Auf Basis deines Inputs entwickeln wir mit KI passende Lösungsansätze – schnell und konkret.
-            </p>
-            <p className="text-sm text-[#252422] mb-1">
->>>>>>> 3983843 (Implement code changes to enhance functionality and improve performance)
               Starte jetzt das Gespräch und mach Mölders gemeinsam mit uns smarter!
             </p>
           </div>
@@ -724,14 +703,8 @@ export default function VoiceAssistant() {
                 style={{background:'none',border:'none',padding:0,lineHeight:1}}
               >×</button>
               <div className="text-xs text-gray-800 mb-4 text-center leading-snug">
-<<<<<<< HEAD
-                Mit dem Klick auf <b>„Zustimmen“</b> erklärst Du Dich damit einverstanden, dass Deine Eingaben aufgezeichnet und durch KI-Technologie ausgewertet werden.<br /><br />
-                Die Inhalte werden ausschließlich intern verwendet, um passende Lösungsideen zu entwickeln – wie in der <a href="https://www.moelders.de/datenschutz" target="_blank" rel="noopener noreferrer" className="underline text-[#df242c]">Datenschutzrichtlinie</a> beschrieben.<br /><br />
-                Wenn Du nicht möchtest, dass Deine Eingaben verarbeitet werden, verzichte bitte auf die Nutzung dieses Dienstes.
-=======
                 Mit dem Klick auf <b>„Zustimmen“</b> und bei jeder weiteren Interaktion mit diesem KI-Agenten erklärst Du Dich damit einverstanden, dass Deine Kommunikation aufgezeichnet, gespeichert und mit Drittanbietern geteilt wird – wie in der <a href="https://www.moelders.de/datenschutz" target="_blank" rel="noopener noreferrer" className="underline text-[#df242c]">Datenschutzrichtlinie</a> beschrieben.<br /><br />
                 Wenn Du nicht möchtest, dass Deine Gespräche aufgezeichnet werden, verzichte bitte auf die Nutzung dieses Dienstes.<br /><br />
->>>>>>> 3983843 (Implement code changes to enhance functionality and improve performance)
               </div>
               <div className="flex flex-row gap-3 w-full mt-2">
                 <button
