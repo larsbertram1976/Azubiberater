@@ -9,6 +9,7 @@ import { downloadTranscript } from '@/utils/transcript'
 import { Conversation } from '@elevenlabs/client'
 import getConfig from 'next/config'
 import { getSignedUrl } from '@/app/actions/getSignedUrl'
+import { useConversation } from '@elevenlabs/react'
 
 const { publicRuntimeConfig } = getConfig?.() || {}
 
@@ -24,7 +25,6 @@ const MAIL_URL = "mailto:azubianfragen@moelders.de?subject=Anfrage%20Azubiberatu
 export default function VoiceAssistant() {
   const [conversation, setConversation] = useState(null)
   const [messages, setMessages] = useState([])
-  const [isSpeaking, setIsSpeaking] = useState(false)
   const [isActive, setIsActive] = useState(false)
   const [showChat, setShowChat] = useState(false)
   const [connectionStatus, setConnectionStatus] = useState('disconnected')
@@ -47,6 +47,38 @@ export default function VoiceAssistant() {
   const [signedUrl, setSignedUrl] = useState(null)
   const [conversationId, setConversationId] = useState(null) // State für conversationId
   const [isMuted, setIsMuted] = useState(false) // State für Mikrofon-Stummschaltung
+
+  // ElevenLabs Conversation Hook für Multimodalität
+  const {
+    startSession,
+    endSession,
+    sendUserMessage,
+    sendUserActivity,
+    status,
+    isSpeaking,
+    canSendFeedback,
+    setVolume,
+    muteMic,
+  } = useConversation({
+    agentId: AGENT_IDS[selectedAgent],
+    onMessage: (message) => {
+      setMessages((prev) => [
+        ...prev,
+        { source: message.source, message: message.message },
+      ])
+      if (message.source !== 'user') setPendingAgentMessage(false)
+    },
+    onError: (error) => {
+      alert('Agentenfehler: ' + error.message)
+      setConnectionStatus('disconnected')
+    },
+    onStatusChange: (s) => setConnectionStatus(s),
+    onModeChange: (mode) => {
+      if (mode === 'speaking') {
+        setPendingAgentMessage(true)
+      }
+    },
+  })
 
   // SpeechRecognition initialisieren (nur einmal beim Mount)
   useEffect(() => {
@@ -108,185 +140,39 @@ export default function VoiceAssistant() {
 
   // Initialisiere Conversation
   const startConversation = useCallback(async () => {
-    try {
-      setConnectionStatus('connecting')
-      console.log('[DEBUG] Datenschutz:', privacyChecked, privacyAccepted)
-      // Agenten-ID je nach Auswahl
-      const agentId = AGENT_IDS[selectedAgent] || AGENT_IDS.moeldi
-      console.log('[DEBUG] AgentId:', agentId)
-      // Ursprünglicher Aufruf der Server-Action
-      const { signedUrl } = await getSignedUrl(agentId)
-      console.log('[DEBUG] getSignedUrl result:', signedUrl)
-      if (!signedUrl) {
-        alert('Fehler: Es konnte keine Verbindung zum Agenten hergestellt werden. Bitte prüfe deine API-Konfiguration.');
-        setConnectionStatus('disconnected')
-        return
-      }
-      setSignedUrl(signedUrl); // Save for REST fallback
-      console.log('[DEBUG] Starte Conversation mit signedUrl:', signedUrl)
-      // Determine if agent is text-only (future: dynamic, for now hardcoded)
-      const isTextOnlyAgent = false; // Set to true if you have a text-only agent
-      // Only set text_only if agent is truly text-only
-      const sessionOptions = {
-        signedUrl,
-        ...(isTextOnlyAgent ? {
-          input_mode: 'text',
-          conversation_config_override: { conversation: { text_only: true } }
-        } : {}),
-        onMessage: (message) => {
-          console.log('[DEBUG] onMessage empfangen:', message)
-          setMessages((prev) => [
-            ...prev,
-            {
-              source: message.source,
-              message: message.message,
-            },
-          ])
-          if (message.source !== 'user') setPendingAgentMessage(false)
-        },
-        onError: (error) => {
-          console.error('[DEBUG] Agentenfehler:', error)
-          alert('Agentenfehler: ' + error.message)
-          setConnectionStatus('disconnected')
-        },
-        onStatusChange: (status) => {
-          console.log('[DEBUG] Statuswechsel:', status)
-          setConnectionStatus(
-            status.status === 'connected' ? 'connected' : 'disconnected'
-          )
-        },
-        onModeChange: (mode) => {
-          console.log('[DEBUG] onModeChange event received:', mode);
-          let modeValue = mode && typeof mode === 'object' ? mode.mode : mode;
-          if (modeValue === 'speaking') {
-            setIsSpeaking(true);
-            setPendingAgentMessage(true);
-          } else {
-            setIsSpeaking(false);
-          }
-        },
-      }
-      const conv = await Conversation.startSession(sessionOptions)
-      console.log('[DEBUG] Conversation.startSession result:', conv)
-      let cid = null;
-      if (conv) {
-        if (conv.conversationId) cid = conv.conversationId;
-        else if (conv.id) cid = conv.id;
-        else if (conv.connection && conv.connection.conversationId) cid = conv.connection.conversationId;
-        else if (conv.connection && conv.connection.conversation_id) cid = conv.connection.conversation_id;
-      }
-      console.log('[DEBUG] Conversation-Objekt:', conv);
-      console.log('[DEBUG] Erkannte conversationId:', cid);
-      if (cid) {
-        setConversationId(cid);
-      } else {
-        setConversationId(null);
-        console.warn('[DEBUG] Keine conversationId im Conversation-Objekt gefunden:', conv)
-      }
-      setConversation(conv)
-      setIsActive(true)
-      setConnectionStatus('connected')
-      if (!recognitionRef.current) createRecognition()
-      startMic()
-    } catch (error) {
-      console.error('Failed to start conversation:', error)
-      alert('Fehler beim Starten des Gesprächs: ' + (error?.message || error))
-      setConnectionStatus('disconnected')
-    }
-  }, [selectedAgent, privacyChecked, privacyAccepted])
+    setConnectionStatus('connecting')
+    await startSession()
+    setIsActive(true)
+    setConnectionStatus('connected')
+  }, [startSession])
 
   // Beende Conversation und Recognition
   const endConversation = useCallback(async () => {
-    if (conversation) {
-      await conversation.endSession()
-      setConversation(null)
-      setIsSpeaking(false)
-      setIsActive(false)
-      setConnectionStatus('disconnected')
-    }
-    if (recognitionRef.current) {
-      try { recognitionRef.current.stop() } catch (e) {}
-      recognitionRef.current = null
-      recognitionGlobal = null
-    }
-  }, [conversation])
+    await endSession()
+    setIsActive(false)
+    setConnectionStatus('disconnected')
+  }, [endSession])
 
-  // Text abschicken (an Agenten senden) – gemäß ElevenLabs Conversational API
+  // Text abschicken (an Agenten senden)
   const handleSend = useCallback(async () => {
-    const text = inputValue.trim();
-    if (!text || !conversation || connectionStatus !== 'connected') {
-      console.warn('[DEBUG] handleSend: Kein Text, keine Conversation oder nicht verbunden', {text, conversation, connectionStatus});
-      return;
-    }
+    const text = inputValue.trim()
+    if (!text || status !== 'connected') return
     setMessages((prev) => [
       ...prev,
-      { source: "user", message: text },
-    ]);
-    setInputValue("");
-    setPendingAgentMessage(true);
+      { source: 'user', message: text },
+    ])
+    setInputValue('')
+    setPendingAgentMessage(true)
     try {
-      // Versuche immer zuerst das SDK (Conversation-Objekt)
-      if (typeof conversation.send === 'function') {
-        try {
-          console.log('[DEBUG] conversation object:', conversation);
-          console.log('[DEBUG] conversation.send exists:', typeof conversation.send);
-          console.log('[DEBUG] Sende an conversation.send:', { input: text });
-          const sendResult = await conversation.send({ input: text });
-          console.log('[DEBUG] conversation.send result:', sendResult);
-          // Die Antwort wird über onMessage verarbeitet
-        } catch (err) {
-          console.error('[DEBUG] conversation.send({ input }) fehlgeschlagen', err);
-          alert('Fehler: Die Nachricht konnte nicht an den Agenten gesendet werden.');
-          setPendingAgentMessage(false);
-        }
-      } else if (signedUrl && conversationId) {
-        // REST fallback (korrekter Endpoint!)
-        const fallbackUrl = `https://api.elevenlabs.io/v1/conversations/${conversationId}/interact`;
-        try {
-          const response = await fetch(fallbackUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'xi-api-key': process.env.NEXT_PUBLIC_ELEVEN_LABS_API_KEY || process.env.ELEVEN_LABS_API_KEY || '',
-            },
-            body: JSON.stringify({ input: text })
-          });
-          if (!response.ok) {
-            throw new Error('REST-Fallback: Antwort nicht OK: ' + response.status);
-          }
-          const data = await response.json();
-          console.log('[DEBUG] REST-Fallback Antwort:', data);
-          if (data && (data.response || data.message)) {
-            setMessages((prev) => [
-              ...prev,
-              { source: 'agent', message: data.response || data.message },
-            ]);
-          } else {
-            setMessages((prev) => [
-              ...prev,
-              { source: 'agent', message: '[Agenten-Antwort nicht lesbar]' },
-            ]);
-          }
-        } catch (errRest) {
-          setMessages((prev) => [
-            ...prev,
-            { source: 'agent', message: '[Fehler bei der Agenten-Antwort]' },
-          ]);
-        }
-        setPendingAgentMessage(false);
-      } else {
-        setMessages((prev) => [
-          ...prev,
-          { source: 'agent', message: '[Fehler: conversation/send nicht verfügbar]' },
-        ]);
-        setPendingAgentMessage(false);
-      }
+      await sendUserMessage(text)
     } catch (err) {
-      setPendingAgentMessage(false);
-      console.error('[DEBUG] Fehler beim Senden an den Agenten:', err);
-      alert('Fehler beim Senden an den Agenten: ' + (err?.message || err));
+      setMessages((prev) => [
+        ...prev,
+        { source: 'agent', message: '[Fehler beim Senden: ' + (err?.message || err) + ']' },
+      ])
     }
-  }, [inputValue, conversation, connectionStatus, signedUrl, conversationId])
+    setPendingAgentMessage(false)
+  }, [inputValue, sendUserMessage, status])
 
   // Automatisches Scrollen zum unteren Ende des Chatverlaufs, wenn neue Nachrichten kommen
   useEffect(() => {
@@ -423,6 +309,16 @@ export default function VoiceAssistant() {
         <span className="leading-none">E-Mail senden</span>
       </a>
     );
+  }
+
+  // --- Text-Eingabe und Senden (aktiviert) ---
+  function handleInputChange(e) {
+    setInputValue(e.target.value);
+  }
+
+  function handleFormSubmit(e) {
+    e.preventDefault();
+    handleSend();
   }
 
   return (
@@ -771,28 +667,26 @@ export default function VoiceAssistant() {
                   </div>
                 )}
               </div>
-              {/* Text-Eingabe und Senden (deaktiviert) */}
-              {/*
-              <form className="w-full flex flex-row items-center gap-2 mb-2" onSubmit={e => {e.preventDefault(); handleSend();}} autoComplete="off">
+              {/* Text-Eingabe und Senden (aktiviert) */}
+              <form className="w-full flex flex-row items-center gap-2 mb-2" onSubmit={handleFormSubmit} autoComplete="off">
                 <input
                   type="text"
                   className="flex-grow rounded-xl border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-[#df242c] bg-white"
                   placeholder="Deine Nachricht ..."
                   value={inputValue}
-                  onChange={e => setInputValue(e.target.value)}
-                  disabled
+                  onChange={handleInputChange}
+                  disabled={connectionStatus !== 'connected'}
                   style={{minWidth:0}}
                 />
                 <button
                   type="submit"
                   className="rounded-xl px-3 py-2 bg-[#df242c] text-white font-semibold text-sm shadow hover:bg-[#b81c24] transition-colors disabled:opacity-50"
-                  disabled
+                  disabled={!inputValue.trim() || connectionStatus !== 'connected'}
                   aria-label="Senden"
                 >
                   <MessageCircle className="w-5 h-5" />
                 </button>
               </form>
-              */}
               {/* Download Button: jetzt volle Breite unterhalb der Aktionsbuttons */}
               <div className="w-full flex flex-row justify-center mb-3 mt-2">
                 <button
