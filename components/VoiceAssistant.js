@@ -14,7 +14,6 @@ const { publicRuntimeConfig } = getConfig?.() || {}
 
 const AGENT_IDS = {
   moeldi: process.env.NEXT_PUBLIC_AGENT_ID_MOELDI,
-
 }
 
 let recognitionGlobal = null // global fallback for SpeechRecognition
@@ -34,7 +33,7 @@ export default function VoiceAssistant() {
   const [showPrivacyModal, setShowPrivacyModal] = useState(false)
   const [privacyAccepted, setPrivacyAccepted] = useState(false)
   const [pendingAgentMessage, setPendingAgentMessage] = useState(false)
-  const [selectedAgent, setSelectedAgent] = useState('moeldi') // 'moeldi' oder 'joshua'
+  const [selectedAgent, setSelectedAgent] = useState('moeldi') // 'moeldi'
   const scrollAreaRef = useRef(null)
   const recognitionRef = useRef(null)
 
@@ -454,7 +453,7 @@ export default function VoiceAssistant() {
             </p>
           </div>
         </div>
-        {/* Agenten-Auswahl: Möldi oder Joshua */}
+        {/* Agenten-Auswahl: Möldi */}
         <style jsx global>{`
           @keyframes pulse-spin-slow {
             0% { transform: rotate(0deg) scale(1); opacity: 0.18; }
@@ -515,16 +514,10 @@ export default function VoiceAssistant() {
             60% { height: 24px; }
             80% { height: 14px; }
           }
-          /* Joshua Farben */
-          .voice-bar.joshua1 { --bar-color1: #baffc9; --bar-color2: #028e4a; }
-          .voice-bar.joshua2 { --bar-color1: #4be585; --bar-color2: #028e4a; }
-          .voice-bar.joshua3 { --bar-color1: #028e4a; --bar-color2: #4be585; }
-          .voice-bar.joshua4 { --bar-color1: #4be585; --bar-color2: #baffc9; }
-          .voice-bar.joshua5 { --bar-color1: #baffc9; --bar-color2: #028e4a; }
         `}</style>
         <div className="flex flex-col items-center gap-2 mb-8 w-full">
           <div className="flex flex-row items-center justify-center gap-8 relative">
-            {/* Möldi (einziger Agent) */}
+            {/* Möldi */}
             <div className="relative flex flex-col items-center justify-center" style={{minWidth: '8rem', minHeight: '8rem'}}>
               {/* Canvas Glow Effekt */}
               <canvas
@@ -555,7 +548,6 @@ export default function VoiceAssistant() {
                     <span className="block w-40 h-40 rounded-full bg-gradient-to-br from-[#ff6f61] via-[#df242c] to-[#ffb199] opacity-20 animate-pulse-spin-rev blur-[6px]" style={{position:'absolute'}}></span>
                     <span className="block w-32 h-32 rounded-full bg-gradient-to-br from-[#ffb199] via-[#ff6f61] to-[#df242c] opacity-30 animate-pulse-scale blur-[8px]" style={{position:'absolute'}}></span>
                   </span>
-                  {/* Vertikale Balken entfernt! */}
                 </>
               )}
               <button
@@ -578,7 +570,7 @@ export default function VoiceAssistant() {
                   className={`object-cover shadow rounded-full border-4 border-[#df242c] transition-all duration-300 relative w-44 h-44 z-10${isSpeaking ? ' animate-profile-pulse' : ''}`}
                   style={{willChange: 'transform'}}
                 />
-                {/* Möldi-Sticker noch weiter nach rechts (fast am Rand), größere Schrift */}
+                {/* Möldi-Sticker */}
                 <span
                   className="absolute left-[99%] top-6 bg-[#df242c] text-white text-sm font-semibold px-5 py-1 rounded-full shadow-lg border-2 border-white z-20"
                   style={{
