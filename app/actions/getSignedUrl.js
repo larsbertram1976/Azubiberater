@@ -8,7 +8,7 @@ export async function getSignedUrl(agentId) {
       {
         method: 'GET',
         headers: {
-          'xi-api-key': process.env.ELEVEN_LABS_API_KEY,
+          'xi-api-key': process.env.ELEVEN_LABS_API,
           'Content-Type': 'application/json',
         },
         cache: 'no-store',
