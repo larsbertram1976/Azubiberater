@@ -26,7 +26,6 @@ export default function VoiceAssistant() {
   const [conversation, setConversation] = useState(null)
   const [messages, setMessages] = useState([])
   const [isActive, setIsActive] = useState(false)
-  const [showChat, setShowChat] = useState(false)
   const [connectionStatus, setConnectionStatus] = useState('disconnected')
   const [inputValue, setInputValue] = useState("")
   const [privacyChecked, setPrivacyChecked] = useState(false)
@@ -47,6 +46,28 @@ export default function VoiceAssistant() {
   const [signedUrl, setSignedUrl] = useState(null)
   const [conversationId, setConversationId] = useState(null) // State für conversationId
   const [isMuted, setIsMuted] = useState(false) // State für Mikrofon-Stummschaltung
+  const micStreamRef = useRef(null)
+  const [isChatOpen, setIsChatOpen] = useState(false)
+
+  // Animation für nacheinander fade-in/fade-out Text, Endlosschleife
+  const conversationButtonTexts = [
+    'Gespräch läuft',
+    'Nenn mir deine Ideen und Anregungen',
+    'Zum Beenden klicken'
+  ]
+  const [conversationTextIndex, setConversationTextIndex] = useState(0)
+
+  useEffect(() => {
+    if (!isActive) {
+      setConversationTextIndex(0)
+      return
+    }
+    // Endlosschleife: alle 2.5s zum nächsten Text, dann wieder von vorne
+    const t = setTimeout(() => {
+      setConversationTextIndex(i => (i + 1) % conversationButtonTexts.length)
+    }, 2500)
+    return () => clearTimeout(t)
+  }, [isActive, conversationTextIndex])
 
   // ElevenLabs Conversation Hook für Multimodalität
   const {
@@ -59,14 +80,29 @@ export default function VoiceAssistant() {
     canSendFeedback,
     setVolume,
     muteMic,
+    muteTTS,
+    unmuteTTS,
   } = useConversation({
     agentId: AGENT_IDS[selectedAgent],
     onMessage: (message) => {
-      setMessages((prev) => [
-        ...prev,
-        { source: message.source, message: message.message },
-      ])
-      if (message.source !== 'user') setPendingAgentMessage(false)
+      setMessages((prev) => {
+        // Streaming: Wenn Agent, hänge an letzte Agenten-Nachricht an
+        // Streaming: Wenn Agent, hänge an letzte Agenten-Nachricht an
+        if (message.source === 'agent') {
+          if (prev.length > 0 && prev[prev.length-1].source === 'agent' && pendingAgentMessage) {
+            // Stream: Update letzte Agenten-Nachricht
+            const updated = [...prev]
+            updated[updated.length-1].message += message.message
+            return updated
+          } else {
+            // Neue Agenten-Nachricht
+            return [...prev, { source: message.source, message: message.message }]
+          }
+        }
+        // User-Nachricht wie gehabt
+        return [...prev, { source: message.source, message: message.message }]
+      })
+      if (message.source !== 'user') setPendingAgentMessage(true)
     },
     onError: (error) => {
       alert('Agentenfehler: ' + error.message)
@@ -78,6 +114,7 @@ export default function VoiceAssistant() {
         setPendingAgentMessage(true)
       }
     },
+    tts: true, // TTS immer aktiv
   })
 
   // SpeechRecognition initialisieren (nur einmal beim Mount)
@@ -113,15 +150,70 @@ export default function VoiceAssistant() {
 
   // Mikrofon starten/stoppen (Instanz bleibt erhalten)
   const startMic = () => {
-    if (recognitionRef.current) {
+    if (recognitionRef.current && !isMuted) {
       try { recognitionRef.current.start() } catch (e) {}
     }
   }
   const stopMic = () => {
     if (recognitionRef.current) {
       try { recognitionRef.current.stop() } catch (e) {}
+      try { recognitionRef.current.abort() } catch (e) {}
     }
   }
+
+  // Mikrofon-Stream holen und verwalten
+  useEffect(() => {
+    if (!isActive) {
+      // Gespräch beendet: Stream freigeben
+      if (micStreamRef.current) {
+        micStreamRef.current.getTracks().forEach(track => track.stop())
+        micStreamRef.current = null
+      }
+      return
+    }
+    // Nur holen, wenn noch kein Stream existiert
+    if (!micStreamRef.current) {
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+          micStreamRef.current = stream
+          stream.getAudioTracks().forEach(track => { track.enabled = !isMuted }) // <-- Mute-Logik direkt anwenden
+        })
+        .catch(() => { micStreamRef.current = null })
+    } else {
+      // Immer Mute-Logik anwenden, falls sich isMuted geändert hat
+      micStreamRef.current.getAudioTracks().forEach(track => { track.enabled = !isMuted })
+    }
+  }, [isActive, isMuted]) // <-- isMuted als Dependency
+
+  // Immer nach jedem neuen Stream und nach jeder Chat-Interaktion Mute-Logik anwenden
+  useEffect(() => {
+    if (micStreamRef.current) {
+      micStreamRef.current.getAudioTracks().forEach(track => { track.enabled = !isMuted })
+    }
+  }, [micStreamRef.current, isMuted])
+
+  // Mikrofon wirklich muten/unmuten (OS/Browser-Level, robust)
+  useEffect(() => {
+    if (!isActive || !micStreamRef.current) return
+    micStreamRef.current.getAudioTracks().forEach(track => {
+      track.enabled = !isMuted
+    })
+  }, [isMuted, isActive])
+
+  // Mikrofon-Mute-Logik: Wenn isMuted sich ändert, stoppe oder starte das Mic
+  useEffect(() => {
+    if (!isActive) return // Nur wenn Gespräch läuft
+    if (isMuted) {
+      if (recognitionRef.current) {
+        try { recognitionRef.current.stop() } catch (e) {}
+        try { recognitionRef.current.abort() } catch (e) {}
+      }
+    } else {
+      if (recognitionRef.current) {
+        try { recognitionRef.current.start() } catch (e) {}
+      }
+    }
+  }, [isMuted, isActive])
 
   // Wenn Gespräch läuft, Instanz erzeugen und Mic starten/stoppen je nach Mute
   useEffect(() => {
@@ -137,6 +229,16 @@ export default function VoiceAssistant() {
       }
     }
   }, [isActive])
+
+  // Debug: Logge den Status der Tracks bei jedem Mute/Unmute
+  useEffect(() => {
+    if (micStreamRef.current) {
+      micStreamRef.current.getAudioTracks().forEach(track => {
+        track.enabled = !isMuted;
+        console.log('MicTrack:', track.label, 'enabled:', track.enabled, 'muted:', isMuted);
+      });
+    }
+  }, [isMuted])
 
   // Initialisiere Conversation
   const startConversation = useCallback(async () => {
@@ -179,7 +281,7 @@ export default function VoiceAssistant() {
     if (scrollAreaRef.current) {
       scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
     }
-  }, [messages, showChat]);
+  }, [messages]);
 
   // React State für Hinweistext
   const [showAgentSwitchHint, setShowAgentSwitchHint] = useState("")
@@ -285,17 +387,10 @@ export default function VoiceAssistant() {
     }
   }, [])
 
-  // Funktion zum Stummschalten/Entstummen des Mikrofons (nutzt ElevenLabs SDK)
+  // Funktion zum Stummschalten/Entstummen des Mikrofons (nur SpeechRecognition, keine SDK muteMic)
   const handleMuteToggle = useCallback(() => {
-    if (!conversation) return;
-    if (isMuted) {
-      conversation.setMicMuted(false);
-      setIsMuted(false);
-    } else {
-      conversation.setMicMuted(true);
-      setIsMuted(true);
-    }
-  }, [conversation, isMuted])
+    setIsMuted(prev => !prev)
+  }, [])
 
   // --- Hilfskomponente für Aktionsbuttons (E-Mail) ---
   function ActionButtons({ size = 'sm' }) {
@@ -410,6 +505,13 @@ export default function VoiceAssistant() {
             60% { height: 24px; }
             80% { height: 14px; }
           }
+          @keyframes marquee {
+            0% { transform: translateX(50%); }
+            100% { transform: translateX(-100%); }
+          }
+          .animate-marquee {
+            animation: marquee 8s linear infinite;
+          }
         `}</style>
         <div className="flex flex-col items-center gap-2 mb-8 w-full">
           <div className="flex flex-row items-center justify-center gap-8 relative">
@@ -507,22 +609,37 @@ export default function VoiceAssistant() {
         {/* Gespräch starten Button + Status-Kreis exakt wie Chatfenster, Status-Kreis zentriert */}
         <div className='flex flex-col items-center mb-8 relative w-full max-w-[420px]'>
           <div className="w-full max-w-[420px] flex flex-row items-center justify-end relative gap-2">
-            {/* Main button: left-aligned, right edge moves left when active to make space for mute button */}
-            <div className={`relative flex items-center transition-all duration-200 ${isActive ? 'flex-grow' : 'w-full'} max-w-[420px]`} style={{flexGrow: isActive ? 1 : undefined, width: isActive ? 'calc(100% - 64px)' : '100%'}}>
+            {/* Main button: always full width, no layout shift when active */}
+            <div className="relative flex items-center transition-all duration-200 w-full max-w-[420px]">
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.97 }}
                 onClick={isActive ? endConversation : startConversation}
                 className={`pr-4 pl-6 py-2 rounded-2xl text-base font-semibold shadow-md transition-all duration-200 focus:outline-none flex-grow flex-shrink flex items-center justify-between relative w-full`
-                  + (isActive ? ' border border-[#df242c] text-[#df242c] bg-white hover:bg-[#df242c] hover:text-white' : selectedAgent === 'moeldi' ? ' bg-[#df242c] text-white hover:bg-[#b81c24]' : ' bg-[#028e4a] text-white hover:bg-[#026c39]')
+                  + (isActive
+                    ? ' border border-[#df242c] bg-[#df242c] text-white hover:bg-[#b81c24]'
+                    : ' bg-[#df242c] text-white hover:bg-[#b81c24]')
                   + (!privacyChecked && !isActive ? ' opacity-50 cursor-not-allowed' : '')}
                 aria-label={isActive ? 'Gespräch beenden' : 'Gespräch starten'}
                 disabled={!privacyChecked && !isActive}
                 type="button"
                 style={{height:'48px', minWidth:0, width: '100%', maxWidth: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position:'relative'}}
               >
-                <span className="w-full text-center block" style={{marginRight: '40px'}}>
-                  {isActive ? 'Gespräch beenden' : `Gespräch mit KI-Möldi starten`}
+                <span className="w-full text-center block" style={{marginRight: '40px', overflow:'hidden', whiteSpace:'nowrap', position:'relative'}}>
+                  {isActive ? (
+                    <AnimatePresence mode="wait">
+                      <motion.span
+                        key={conversationTextIndex}
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -30 }}
+                        transition={{ duration: 0.7 }}
+                        style={{ display: 'inline-block', width: '100%' }}
+                      >
+                        {conversationButtonTexts[conversationTextIndex]}
+                      </motion.span>
+                    </AnimatePresence>
+                  ) : 'Gespräch mit KI-Möldi starten'}
                 </span>
                 {/* Status-Kreis bündig am rechten Rand, IM BUTTON, NICHT ABSOLUT! */}
                 <span
@@ -534,12 +651,11 @@ export default function VoiceAssistant() {
                     className={`block w-10 h-10 rounded-full border-4 ${connectionStatus === 'connected' ? 'border-white bg-green-600' : 'border-white bg-[#ededed]'}`}
                     style={{ boxShadow: '0 0 0 2px #fff', position: 'relative', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto' }}
                   >
-                    {connectionStatus === 'connected' && (
+                    {connectionStatus === 'connected' ? (
                       <svg viewBox="0 0 20 20" width="18" height="18" style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)'}} aria-hidden="true" focusable="false">
                         <polyline points="5,11 9,15 15,7" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
-                    )}
-                    {connectionStatus !== 'connected' && (
+                    ) : (
                       <svg viewBox="0 0 32 32" width="22" height="22" style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)'}} aria-hidden="true" focusable="false">
                         {/* Drei unterschiedlich hohe, schwarze Balken, mittig */}
                         <rect x="9" y="13" width="2.5" height="6" rx="1.2" fill="#222" />
@@ -551,33 +667,7 @@ export default function VoiceAssistant() {
                 </span>
               </motion.button>
             </div>
-            {/* Mute/Unmute Icon-Button: Nur sichtbar, wenn Gespräch aktiv ist, rechts daneben */}
-            {isActive && (
-              <button
-                onClick={handleMuteToggle}
-                className={
-                  `flex items-center justify-center rounded-full transition-colors w-12 h-12 shadow-md border-4 focus:outline-none ml-2 ` +
-                  (isMuted
-                    ? 'bg-[#fff] border-[#f39c12]' // Orange Ring wenn gemutet
-                    : 'bg-[#fff] border-[#28b463]') // Neutraler grüner Ring wenn aktiv
-                }
-                type="button"
-                aria-label={isMuted ? 'Mikrofon einschalten' : 'Mikrofon stummschalten'}
-                title={isMuted ? 'Mikrofon einschalten' : 'Mikrofon stummschalten'}
-                style={{minHeight:'48px', minWidth:'48px', borderWidth: '4px'}}
-              >
-                {/* Mikrofon-Icon in dezentem Grau #7c7c7c */}
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#7c7c7c" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <rect x="9" y="2" width="6" height="12" rx="3" />
-                  <path d="M5 10v2a7 7 0 0 0 14 0v-2" />
-                  <line x1="12" y1="19" x2="12" y2="22" />
-                  <line x1="8" y1="22" x2="16" y2="22" />
-                  {isMuted && (
-                    <line x1="4" y1="4" x2="20" y2="20" stroke="#f39c12" strokeWidth="2.8" strokeLinecap="round" opacity="0.95" />
-                  )}
-                </svg>
-              </button>
-            )}
+            {/* Mute/Unmute Icon-Button: entfernt! */}
           </div>
         </div>
         {/* Datenschutz-Modal */}
@@ -617,33 +707,46 @@ export default function VoiceAssistant() {
         )}
         {/* Chatfenster und Aktionsbuttons (klassisch gestapelt, Card-Look, klare Abstände) */}
         <div className="w-full max-w-[420px] flex flex-col items-center">
-          {/* Zeige Chat Button unter Gespräch starten/beenden */}
-          <div className="w-full flex flex-col items-center mb-2">
+          {/* Chatbereich: Eingabe immer sichtbar, Verlauf ein-/ausklappbar */}
+          <div id="chatbereich" className="w-full max-w-[420px] flex flex-col items-center">
+            {/* Eingabefeld immer sichtbar */}
+            <form className="w-full flex flex-row items-center gap-2 mb-2" onSubmit={handleFormSubmit} autoComplete="off">
+              <input
+                type="text"
+                className="flex-grow rounded-xl border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-[#df242c] bg-white"
+                placeholder="Deine Nachricht ..."
+                value={inputValue}
+                onChange={handleInputChange}
+                disabled={connectionStatus !== 'connected'}
+                style={{minWidth:0}}
+              />
+              <button
+                type="submit"
+                className="rounded-xl px-3 py-2 bg-[#df242c] text-white font-semibold text-sm shadow hover:bg-[#b81c24] transition-colors disabled:opacity-50"
+                disabled={!inputValue.trim() || connectionStatus !== 'connected'}
+                aria-label="Senden"
+              >
+                <MessageCircle className="w-5 h-5" />
+              </button>
+            </form>
+            {/* Button zum Auf-/Zuklappen des Chatverlaufs mit +/− Icon rechts und Hover-Effekt für das Icon */}
             <button
-              className="rounded-2xl px-4 py-2 bg-[#ededed] text-[#252422] text-sm shadow hover:bg-[#df242c] hover:text-white transition-colors focus:outline-none w-full max-w-[420px] flex items-center justify-center gap-2 relative"
+              className="w-full rounded-xl px-3 py-2 bg-[#ededed] text-[#252422] font-semibold text-sm shadow hover:bg-[#df242c] hover:text-white transition-colors mb-2 flex items-center justify-between group"
+              style={{maxWidth:420}}
+              onClick={() => setIsChatOpen(open => !open)}
+              aria-label={isChatOpen ? 'Chatverlauf zuklappen' : 'Chatverlauf aufklappen'}
               type="button"
-              onClick={() => setShowChat((prev) => !prev)}
-              aria-expanded={showChat}
-              aria-controls="chatbereich"
-              style={{width:'100%', maxWidth:'420px'}}>
-              {/* Speech bubble icon */}
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="inline-block mr-1 -mt-0.5" aria-hidden="true"><path d="M21 11.5C21 16 16.97 19 12 19c-.97 0-1.91-.09-2.8-.27-.37-.07-.75-.01-1.07.17l-2.13 1.19c-.76.43-1.68-.23-1.54-1.09l.37-2.19c.06-.37-.03-.75-.25-1.05C3.53 14.13 3 12.87 3 11.5 3 7 7.03 4 12 4s9 3 9 7.5Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/></svg>
-              {showChat ? 'Chat ausblenden' : 'Zeige Chat'}
-              {/* Plus/Minus Symbol ganz rechts mit Abstand */}
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-lg select-none" aria-hidden="true" style={{paddingLeft:'8px'}}>{showChat ? '−' : '+'}</span>
+            >
+              <span>{isChatOpen ? 'Chatverlauf zuklappen' : 'Chatverlauf anzeigen'}</span>
+              <span
+                style={{fontSize:'1.3em', marginLeft:'8px', fontWeight:600, transition:'color 0.2s'}}
+                className="group-hover:text-white"
+                aria-hidden="true"
+              >{isChatOpen ? '−' : '+'}</span>
             </button>
-            {/* Aktionsbuttons: nur im zugeklappten Modus unter dem Button sichtbar */}
-            {!showChat && (
-              <div className="w-full flex flex-row items-center justify-between mt-2 max-w-[420px] gap-2">
-                <ActionButtons size="md" />
-              </div>
-            )}
-          </div>
-          {/* Chatbereich: nur sichtbar, wenn showChat true */}
-          {showChat && (
-            <div id="chatbereich" className="w-full max-w-[420px] flex flex-col items-center">
-              {/* Chatfenster */}
-              <div className="w-full bg-white rounded-2xl shadow-lg border border-gray-200 p-4 mb-4 max-h-[320px] min-h-[120px] overflow-y-auto text-sm" ref={scrollAreaRef} style={{minHeight:120, maxHeight:320}}>
+            {/* Chatverlauf nur wenn offen, Schriftgröße noch kleiner für bessere Lesbarkeit */}
+            {isChatOpen && (
+              <div className="w-full bg-white rounded-2xl shadow-lg border border-gray-200 p-4 mb-4 max-h-[320px] min-h-[120px] overflow-y-auto text-[0.78em] leading-relaxed" ref={scrollAreaRef} style={{minHeight:120, maxHeight:320}}>
                 {messages.length === 0 ? (
                   <div className="text-gray-400 text-center py-8 select-none">Hier erscheint dein Chatverlauf mit Möldi.</div>
                 ) : (
@@ -661,52 +764,13 @@ export default function VoiceAssistant() {
                     </div>
                   ))
                 )}
-                {pendingAgentMessage && (
-                  <div className="flex justify-start mb-2">
-                    <div className="px-3 py-2 rounded-xl bg-gray-100 text-[#252422] max-w-[80%] animate-pulse">Möldi schreibt ...</div>
-                  </div>
-                )}
               </div>
-              {/* Text-Eingabe und Senden (aktiviert) */}
-              <form className="w-full flex flex-row items-center gap-2 mb-2" onSubmit={handleFormSubmit} autoComplete="off">
-                <input
-                  type="text"
-                  className="flex-grow rounded-xl border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-[#df242c] bg-white"
-                  placeholder="Deine Nachricht ..."
-                  value={inputValue}
-                  onChange={handleInputChange}
-                  disabled={connectionStatus !== 'connected'}
-                  style={{minWidth:0}}
-                />
-                <button
-                  type="submit"
-                  className="rounded-xl px-3 py-2 bg-[#df242c] text-white font-semibold text-sm shadow hover:bg-[#b81c24] transition-colors disabled:opacity-50"
-                  disabled={!inputValue.trim() || connectionStatus !== 'connected'}
-                  aria-label="Senden"
-                >
-                  <MessageCircle className="w-5 h-5" />
-                </button>
-              </form>
-              {/* Download Button: jetzt volle Breite unterhalb der Aktionsbuttons */}
-              <div className="w-full flex flex-row justify-center mb-3 mt-2">
-                <button
-                  type="button"
-                  className="rounded-2xl px-2 py-1.5 bg-[#ededed] text-[#252422] text-xs shadow hover:bg-[#df242c] hover:text-white transition-colors w-full flex items-center justify-center"
-                  onClick={() => downloadTranscript(messages)}
-                  aria-label="Gespräch runterladen"
-                  disabled={messages.length === 0}
-                >
-                  <Download className="w-4 h-4 mr-1 inline-block align-middle" /> Gespräch runterladen
-                </button>
-              </div>
-              {/* Aktionsbuttons: im ausgeklappten Modus verkleinert im Footerbereich */}
-              {showChat && (
-                <div className="w-full flex flex-row items-center justify-center mt-1 pb-1 pt-2 border-t border-gray-100 gap-1">
-                  <ActionButtons size="sm" />
-                </div>
-              )}
+            )}
+            {/* Aktionsbuttons */}
+            <div className="w-full flex flex-row items-center justify-center mt-1 pb-1 pt-2 border-t border-gray-100 gap-1">
+              <ActionButtons size="sm" />
             </div>
-          )}
+          </div>
         </div>
       </div>
     </div>
