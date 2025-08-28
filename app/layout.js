@@ -1,18 +1,22 @@
 import { Inter } from 'next/font/google'
 import './globals.css'
+import { APP_CONFIG } from '../config'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  title: 'Mölders Azubi Berater',
+  title: APP_CONFIG.tabTitle,
   description: 'Sprachassistent für Azubi-Beratung bei Mölders',
+  icons: {
+    icon: APP_CONFIG.favicon
+  }
 }
 
 export default function RootLayout({ children }) {
   return (
     <html lang='en'>
       <head>
-        <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+        {/* Favicon wird jetzt über metadata gesetzt */}
       </head>
       <body className={inter.className}>{children}</body>
     </html>

@@ -28,5 +28,7 @@ Starte jetzt das Gespräch und mach uns gemeinsam smarter!`,
   privacyModalDecline: "Ablehnen",
   backgroundImage: "/public-pics/Leuchtturm.png",
   primaryColor: "#df242c",
-  secondaryColor: "#b81c24"
+  secondaryColor: "#b81c24",
+  tabTitle: "Mölders Ideenmanager",
+  favicon: "/favicon-Moelders.ico"
 }
