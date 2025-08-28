@@ -6,7 +6,7 @@ const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
   title: APP_CONFIG.tabTitle,
-  description: 'Sprachassistent für Azubi-Beratung bei Mölders',
+  description: APP_CONFIG.tabDescription,
   icons: {
     icon: APP_CONFIG.favicon
   }

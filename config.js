@@ -30,5 +30,6 @@ Starte jetzt das Gespräch und mach uns gemeinsam smarter!`,
   primaryColor: "#df242c",
   secondaryColor: "#b81c24",
   tabTitle: "Mölders Ideenmanager",
+  tabDescription: "Ideenmanager für Mölders",
   favicon: "/favicon-Moelders.ico"
 }
