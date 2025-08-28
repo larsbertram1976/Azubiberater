@@ -10,6 +10,7 @@ import { Conversation } from '@elevenlabs/client'
 import getConfig from 'next/config'
 import { getSignedUrl } from '@/app/actions/getSignedUrl'
 import { useConversation } from '@elevenlabs/react'
+import { APP_CONFIG } from '../config'
 
 const { publicRuntimeConfig } = getConfig?.() || {}
 
@@ -20,7 +21,7 @@ const AGENT_IDS = {
 let recognitionGlobal = null // global fallback for SpeechRecognition
 
 // --- Konstanten für Kontakt-Links ---
-const MAIL_URL = "mailto:azubianfragen@moelders.de?subject=Anfrage%20Azubiberatung";
+// const MAIL_URL = "mailto:azubianfragen@moelders.de?subject=Anfrage%20Azubiberatung";
 
 export default function VoiceAssistant() {
   const [conversation, setConversation] = useState(null)
@@ -50,11 +51,7 @@ export default function VoiceAssistant() {
   const [isChatOpen, setIsChatOpen] = useState(false)
 
   // Animation für nacheinander fade-in/fade-out Text, Endlosschleife
-  const conversationButtonTexts = [
-    'Gespräch läuft',
-    'Nenn mir deine Ideen und Anregungen',
-    'Zum Beenden klicken'
-  ]
+  const conversationButtonTexts = APP_CONFIG.conversationButtonTexts
   const [conversationTextIndex, setConversationTextIndex] = useState(0)
 
   useEffect(() => {
@@ -397,11 +394,11 @@ export default function VoiceAssistant() {
     // Nur E-Mail Button, volle Breite wie Chatfenster-Button
     const base = 'w-full flex items-center justify-center px-4 py-2 text-sm font-normal rounded-2xl h-12 whitespace-nowrap gap-2 bg-[#ededed] text-[#252422] shadow hover:bg-[#df242c] hover:text-white text-center transition-colors';
     return (
-      <a href={MAIL_URL} target="_blank" rel="noopener noreferrer"
+      <a href={APP_CONFIG.mailUrl} target="_blank" rel="noopener noreferrer"
         className={base}
         style={{lineHeight:'1.1', maxWidth: '420px'}}>
         <Mail className="w-[18px] h-[18px] mr-2" strokeWidth={1.8} />
-        <span className="leading-none">E-Mail senden</span>
+        <span className="leading-none">{APP_CONFIG.emailButtonText}</span>
       </a>
     );
   }
@@ -420,7 +417,7 @@ export default function VoiceAssistant() {
     <div className={`min-h-screen flex flex-col items-center justify-center bg-white pt-2 pb-4 px-4 relative${isIframe ? ' min-h-0 h-full' : ''}`}
          style={isIframe ? { minHeight: '100vh', height: '100vh', padding: 0 } : { paddingLeft: 16, paddingRight: 16, minHeight: '100vh', paddingTop: 8, paddingBottom: 16 }}>
       {/* --- LEUCHTTURM Hintergrundbild: Position und Styling --- */}
-      <img src="/public-pics/Leuchtturm.png" alt="Leuchtturm"
+      <img src={APP_CONFIG.backgroundImage} alt="Leuchtturm"
         className="absolute z-0 pointer-events-none select-none opacity-10"
         style={{
           width: '40vw',
@@ -434,14 +431,9 @@ export default function VoiceAssistant() {
            style={isIframe ? { maxWidth: '100vw' } : { maxWidth: 420, width: '100%' }}>
         {/* Begrüßungstext und Einleitung */}
         <div className="w-full flex flex-col items-center text-center mb-3 px-2">
-          <h2 className="text-2xl font-semibold text-[#df242c] mb-1">Hey – Deine Idee zählt!</h2>
+          <h2 className="text-2xl font-semibold text-[#df242c] mb-1">{APP_CONFIG.headerTitle}</h2>
           <div className="w-full max-w-md">
-            <p className="text-sm text-[#252422] mb-2">
-              Ich bin <span className="font-bold text-[#df242c]">Möldi</span>, euer digitaler Ideenassistent bei Mölders.<br />
-              Teile mit mir, was dich im Alltag nervt oder wo du Potenzial für Verbesserung siehst – ob klein oder groß.<br />
-              Auf Basis deines Inputs entwickeln wir mit KI passende Lösungsansätze – schnell und konkret.<br />
-              Starte jetzt das Gespräch und mach Mölders gemeinsam mit uns smarter!
-            </p>
+            <p className="text-sm text-[#252422] mb-2" dangerouslySetInnerHTML={{ __html: APP_CONFIG.headerDescription }} />
           </div>
         </div>
         {/* Agenten-Auswahl: Möldi */}
@@ -563,7 +555,7 @@ export default function VoiceAssistant() {
                 disabled={false}
               >
                 <img
-                  src="/public-pics/Moeldi.png"
+                  src={APP_CONFIG.agentImage}
                   alt="Möldi, Azubiberaterin"
                   className={`object-cover shadow rounded-full border-4 border-[#df242c] transition-all duration-300 relative w-44 h-44 z-10${isSpeaking ? ' animate-profile-pulse' : ''}`}
                   style={{willChange: 'transform'}}
@@ -577,7 +569,7 @@ export default function VoiceAssistant() {
                     boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
                   }}
                 >
-                  Möldi
+                  {APP_CONFIG.agentSticker}
                 </span>
               </button>
             </div>
@@ -602,7 +594,7 @@ export default function VoiceAssistant() {
               tabIndex={0}
             />
             <label htmlFor="privacy-check" className="text-[11px] text-gray-700 select-none cursor-pointer" style={{lineHeight:1.1}}>
-              Ich akzeptiere die <span className="underline text-[#df242c] cursor-pointer" onClick={e => {e.preventDefault(); window.open('https://www.moelders.de/datenschutz', '_blank', 'noopener,noreferrer')}}>Datenschutzrichtlinie</span>
+              {APP_CONFIG.privacyLabel} <span className="underline text-[#df242c] cursor-pointer" onClick={e => {e.preventDefault(); window.open(APP_CONFIG.privacyLink, '_blank', 'noopener,noreferrer')}}>{APP_CONFIG.privacyLinkText}</span>
             </label>
           </div>
         </div>
@@ -639,7 +631,7 @@ export default function VoiceAssistant() {
                         {conversationButtonTexts[conversationTextIndex]}
                       </motion.span>
                     </AnimatePresence>
-                  ) : 'Gespräch mit KI-Möldi starten'}
+                  ) : APP_CONFIG.startConversationButtonText}
                 </span>
                 {/* Status-Kreis bündig am rechten Rand, IM BUTTON, NICHT ABSOLUT! */}
                 <span
@@ -681,8 +673,7 @@ export default function VoiceAssistant() {
                 style={{background:'none',border:'none',padding:0,lineHeight:1}}
               >×</button>
               <div className="text-xs text-gray-800 mb-4 text-center leading-snug">
-                Mit dem Klick auf <b>„Zustimmen“</b> und bei jeder weiteren Interaktion mit diesem KI-Agenten erklärst Du Dich damit einverstanden, dass Deine Kommunikation aufgezeichnet, gespeichert und mit Drittanbietern geteilt wird – wie in der <a href="https://www.moelders.de/datenschutz" target="_blank" rel="noopener noreferrer" className="underline text-[#df242c]">Datenschutzrichtlinie</a> beschrieben.<br /><br />
-                Wenn Du nicht möchtest, dass Deine Gespräche aufgezeichnet werden, verzichte bitte auf die Nutzung dieses Dienstes.<br /><br />
+                <span dangerouslySetInnerHTML={{ __html: APP_CONFIG.privacyModalText }} />
               </div>
               <div className="flex flex-row gap-3 w-full mt-2">
                 <button
@@ -692,7 +683,7 @@ export default function VoiceAssistant() {
                     setPrivacyChecked(true);
                     setShowPrivacyModal(false);
                   }}
-                >Zustimmen</button>
+                >{APP_CONFIG.privacyModalAccept}</button>
                 <button
                   className="flex-1 px-3 py-1.5 rounded-lg bg-gray-200 text-gray-700 text-xs font-semibold hover:bg-gray-300 transition-colors"
                   onClick={() => {
@@ -700,7 +691,7 @@ export default function VoiceAssistant() {
                     setPrivacyChecked(false);
                     setShowPrivacyModal(false);
                   }}
-                >Ablehnen</button>
+                >{APP_CONFIG.privacyModalDecline}</button>
               </div>
             </div>
           </div>
@@ -714,7 +705,7 @@ export default function VoiceAssistant() {
               <input
                 type="text"
                 className="flex-grow rounded-xl border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-[#df242c] bg-white"
-                placeholder="Deine Nachricht ..."
+                placeholder={APP_CONFIG.inputPlaceholder}
                 value={inputValue}
                 onChange={handleInputChange}
                 disabled={connectionStatus !== 'connected'}
@@ -734,10 +725,10 @@ export default function VoiceAssistant() {
               className="w-full rounded-xl px-3 py-2 bg-[#ededed] text-[#252422] font-semibold text-sm shadow hover:bg-[#df242c] hover:text-white transition-colors mb-2 flex items-center justify-between group"
               style={{maxWidth:420}}
               onClick={() => setIsChatOpen(open => !open)}
-              aria-label={isChatOpen ? 'Chatverlauf zuklappen' : 'Chatverlauf aufklappen'}
+              aria-label={isChatOpen ? APP_CONFIG.chatToggleHide : APP_CONFIG.chatToggleShow}
               type="button"
             >
-              <span>{isChatOpen ? 'Chatverlauf zuklappen' : 'Chatverlauf anzeigen'}</span>
+              <span>{isChatOpen ? APP_CONFIG.chatToggleHide : APP_CONFIG.chatToggleShow}</span>
               <span
                 style={{fontSize:'1.3em', marginLeft:'8px', fontWeight:600, transition:'color 0.2s'}}
                 className="group-hover:text-white"
@@ -748,7 +739,7 @@ export default function VoiceAssistant() {
             {isChatOpen && (
               <div className="w-full bg-white rounded-2xl shadow-lg border border-gray-200 p-4 mb-4 max-h-[320px] min-h-[120px] overflow-y-auto text-[0.78em] leading-relaxed" ref={scrollAreaRef} style={{minHeight:120, maxHeight:320}}>
                 {messages.length === 0 ? (
-                  <div className="text-gray-400 text-center py-8 select-none">Hier erscheint dein Chatverlauf mit Möldi.</div>
+                  <div className="text-gray-400 text-center py-8 select-none">{APP_CONFIG.chatEmptyText}</div>
                 ) : (
                   messages.map((msg, idx) => (
                     <div key={idx} className={`mb-2 flex ${msg.source === 'user' ? 'justify-end' : 'justify-start'}`}> 
