@@ -235,6 +235,35 @@ export default function VoiceAssistant() {
     }
   }, [messages]);
 
+  // --- NEU: Seite und Chatfenster scrollen beim Öffnen/Schließen des Chatverlaufs ---
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (isChatOpen) {
+      // Nach unten scrollen, so dass der untere Rand des Chatverlaufs sichtbar ist
+      setTimeout(() => {
+        // 1. Seite scrollen
+        const chatBox = scrollAreaRef.current;
+        if (chatBox) {
+          const rect = chatBox.getBoundingClientRect();
+          const scrollY = window.scrollY + rect.bottom - window.innerHeight;
+          window.scrollTo({ top: Math.max(scrollY, 0), behavior: 'smooth' });
+          // 2. Chatfenster scrollen
+          chatBox.scrollTop = chatBox.scrollHeight;
+        }
+      }, 120); // Kurze Verzögerung, damit das Element gerendert ist
+    } else {
+      // Nach oben scrollen, wenn Chatverlauf geschlossen wird
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [isChatOpen]);
+
+  // Automatisches Scrollen zum unteren Ende des Chatverlaufs, wenn neue Nachrichten kommen
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+    }
+  }, [messages]);
+
   // React State für Hinweistext
   const [showAgentSwitchHint, setShowAgentSwitchHint] = useState("")
 
@@ -420,7 +449,30 @@ export default function VoiceAssistant() {
           <div className="w-full flex flex-col items-center text-center mb-3 px-2">
             <h2 className="text-2xl font-semibold text-[#df242c] mb-1">{APP_CONFIG.headerTitle}</h2>
             <div className="w-full max-w-md">
-              <p className="text-sm text-[#252422] mb-2" dangerouslySetInnerHTML={{ __html: APP_CONFIG.headerDescription }} />
+              <p
+                className="header-desc-mobile text-sm text-[#252422] mb-2"
+                style={{
+                  fontSize: APP_CONFIG.headerFontSizeDesktop || '1rem',
+                  lineHeight: APP_CONFIG.headerLineHeightDesktop || 1.35,
+                  marginBottom: '0.5rem',
+                  wordBreak: 'break-word',
+                }}
+                dangerouslySetInnerHTML={{ __html:
+                  APP_CONFIG.headerDescription
+                    .replace(/Möldi/, '<span style="color:#df242c;font-weight:bold;">Möldi</span>')
+                    .replace(/digitaler Ideenassistent/, '<span style="color:#df242c;font-weight:bold;">digitaler Ideenassistent</span>')
+                    .replace(/schnell und konkret/, '<span style="color:#df242c;font-weight:bold;">schnell und konkret</span>')
+                    .replace(/Starte jetzt das Gespräch/, '<span style="text-decoration:underline;font-weight:bold;">Starte jetzt das Gespräch</span>')
+                }}
+              />
+              <style>{`
+                @media (max-width: 600px) {
+                  .header-desc-mobile {
+                    font-size: ${APP_CONFIG.headerFontSizeMobile || '0.8rem'} !important;
+                    line-height: ${APP_CONFIG.headerLineHeightMobile || '1.50'} !important;
+                  }
+                }
+              `}</style>
             </div>
           </div>
           {/* Agenten-Auswahl: Möldi */}
@@ -585,15 +637,15 @@ export default function VoiceAssistant() {
               </label>
             </div>
           </div>
-          <div className="w-full max-w-[420px] flex flex-col items-center mb-8 relative">
-            <div className="w-full max-w-[420px] flex flex-row items-center justify-start relative gap-2">
-              {/* Main button: always visible, fixed width so it never overlaps mute button */}
-              <div className="flex-shrink-0" style={{width:'calc(100% - 60px)', maxWidth:'352px'}}>
+          <div className="w-full max-w-[420px] flex flex-col items-center mb-4 relative">
+            <div className="w-full relative flex flex-col items-start">
+              {/* Main red button full width */}
+              <div className="w-full mb-4"> {/* Abstand unten auf 1rem reduziert, wie beim Input zum Chatverlauf-Toggle */}
                 <motion.button
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={isActive ? endConversation : startConversation}
-                  className={`pr-4 pl-6 py-2 rounded-2xl text-base font-semibold shadow-md transition-all duration-200 focus:outline-none flex-grow flex-shrink flex items-center justify-between relative w-full`
+                  className={`pr-4 pl-4 py-2 rounded-2xl text-base font-semibold shadow-md transition-all duration-200 focus:outline-none flex-grow flex-shrink flex items-center justify-center relative w-full`
                     + (isActive
                       ? ' border border-[#df242c] bg-[#df242c] text-white hover:bg-[#b81c24]'
                       : ' bg-[#df242c] text-white hover:bg-[#b81c24]')
@@ -603,30 +655,36 @@ export default function VoiceAssistant() {
                   type="button"
                   style={{
                     height:'48px',
-                    minWidth: 'calc(100vw - 92px)', // On mobile, never full width, leaves space for mute button
-                    maxWidth: '352px',
+                    minWidth: '0',
+                    maxWidth: '100%',
                     width: '100%',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'space-between',
+                    justifyContent: 'center',
                     position:'relative',
                     transition: 'min-width 0.3s, max-width 0.3s',
-                    marginRight: '24px'
+                    marginRight: 0,
+                    paddingLeft: '1rem',
+                    paddingRight: '1rem',
+                    boxSizing: 'border-box'
                   }}
                 >
-                  <span className="block text-center"
+                  <span className="block w-full text-center flex items-center justify-center"
                     style={{
-                      marginRight: '40px',
                       overflow: 'hidden',
                       whiteSpace: 'nowrap',
                       position: 'relative',
                       textOverflow: 'ellipsis',
-                      width: '260px',
                       fontSize: '1em',
                       minHeight: '1.3em',
-                      display: 'inline-block',
-                      verticalAlign: 'middle',
-                      transition: 'width 0.3s'
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '100%',
+                      height: '100%',
+                      paddingLeft: '0.5rem',
+                      paddingRight: '0.5rem',
+                      boxSizing: 'border-box'
                     }}
                   >
                     {isActive ? (
@@ -644,6 +702,8 @@ export default function VoiceAssistant() {
                             textOverflow: 'ellipsis',
                             whiteSpace: 'nowrap',
                             fontSize: '1em',
+                            textAlign: 'center',
+                            verticalAlign: 'middle',
                           }}
                         >
                           {conversationButtonTexts[conversationTextIndex]}
@@ -651,46 +711,7 @@ export default function VoiceAssistant() {
                       </AnimatePresence>
                     ) : APP_CONFIG.startConversationButtonText}
                   </span>
-                  {/* Status-Kreis bündig am rechten Rand, IM BUTTON, NICHT ABSOLUT! */}
-                  <span
-                    className="flex items-center justify-center ml-auto"
-                    aria-label={connectionStatus === 'connected' ? 'Verbunden' : 'Nicht verbunden'}
-                    style={{height:'40px', width:'40px', display:'flex', alignItems:'center', justifyContent:'center', marginLeft: 0}}
-                  >
-                    <span
-                      className={`block w-10 h-10 rounded-full border-4 ${connectionStatus === 'connected' ? 'border-white bg-green-600' : 'border-white bg-[#ededed]'}`}
-                      style={{ boxShadow: '0 0 0 2px #fff', position: 'relative', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto' }}
-                    >
-                      {connectionStatus === 'connected' ? (
-                        <svg viewBox="0 0 20 20" width="18" height="18" style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)'}} aria-hidden="true" focusable="false">
-                          <polyline points="5,11 9,15 15,7" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      ) : (
-                        <svg viewBox="0 0 32 32" width="22" height="22" style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)'}} aria-hidden="true" focusable="false">
-                          {/* Drei unterschiedlich hohe, schwarze Balken, mittig */}
-                          <rect x="9" y="13" width="2.5" height="6" rx="1.2" fill="#222" />
-                          <rect x="15" y="9" width="2.5" height="14" rx="1.2" fill="#222" />
-                          <rect x="21" y="13" width="2.5" height="6" rx="1.2" fill="#222" />
-                        </svg>
-                      )}
-                    </span>
-                  </span>
                 </motion.button>
-              </div>
-              {/* Microphone mute button: always visible, icon only, color changes, disabled if not active */}
-              <div className="flex-shrink-0" style={{width:'48px', minWidth:'48px', maxWidth:'48px'}}>
-                <button
-                  type="button"
-                  aria-label={micMuted ? 'Mikrofon einschalten' : 'Mikrofon ausschalten'}
-                  onClick={() => isActive && setMicMuted(muted => !muted)}
-                  className={`flex items-center justify-center px-0 py-0 rounded-full shadow font-semibold text-base border transition-colors`
-                    + (micMuted ? ' bg-orange-400 text-white border-orange-400 hover:bg-orange-500' : ' bg-[#ededed] text-[#252422] border-gray-300 hover:bg-[#df242c] hover:text-white')
-                    + (!isActive ? ' opacity-50 cursor-not-allowed' : '')}
-                  style={{width:'48px',height:'48px',minWidth:'48px',minHeight:'48px',maxWidth:'48px',maxHeight:'48px'}}
-                  disabled={!isActive}
-                >
-                  {micMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
-                </button>
               </div>
             </div>
           </div>
@@ -733,25 +754,29 @@ export default function VoiceAssistant() {
             {/* Chatbereich: Eingabe immer sichtbar, Verlauf ein-/ausklappbar */}
             <div id="chatbereich" className="w-full max-w-[420px] flex flex-col items-center">
               {/* Eingabefeld und Senden-Button nebeneinander, volle Breite und linksbündig, Abstand nach oben minimal, Abstand nach unten vergrößert */}
-              <div className="w-full flex flex-row items-start gap-2 mb-4 justify-start" style={{marginTop: '1px'}}>
+              <div className="w-full flex flex-row items-start gap-2 mb-4 justify-start" style={{marginTop: '0'}}>
                 <form className="w-full flex flex-row items-center gap-2" onSubmit={handleFormSubmit} autoComplete="off">
                   <input
                     type="text"
-                    className="flex-grow rounded-xl border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-[#df242c] bg-white"
+                    className="w-10/12 rounded-xl border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-[#df242c] bg-white"
                     placeholder={APP_CONFIG.inputPlaceholder}
                     value={inputValue}
                     onChange={handleInputChange}
                     disabled={connectionStatus !== 'connected'}
                     style={{minWidth:0, height:'48px'}}
                   />
+                  {/* Microphone mute button replaces send button */}
                   <button
-                    type="submit"
-                    className="rounded-full w-12 h-12 bg-[#df242c] text-white font-semibold text-lg shadow hover:bg-[#b81c24] transition-colors disabled:opacity-50 flex items-center justify-center"
-                    disabled={!inputValue.trim() || connectionStatus !== 'connected'}
-                    aria-label="Senden"
+                    type="button"
+                    aria-label={micMuted ? 'Mikrofon einschalten' : 'Mikrofon ausschalten'}
+                    onClick={() => isActive && setMicMuted(muted => !muted)}
+                    className={`rounded-full w-12 h-12 flex items-center justify-center shadow font-semibold text-base border transition-colors`
+                      + (micMuted ? ' bg-orange-400 text-white border-orange-400 hover:bg-orange-500' : ' bg-[#ededed] text-[#252422] border-gray-300 hover:bg-[#df242c] hover:text-white')
+                      + (!isActive ? ' opacity-50 cursor-not-allowed' : '')}
                     style={{marginLeft:'6px', display:'flex', alignItems:'center', justifyContent:'center', padding:0}}
+                    disabled={!isActive}
                   >
-                    <ArrowUp className="w-6 h-6" style={{margin:0, padding:0, display:'block'}} />
+                    {micMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
                   </button>
                 </form>
               </div>
