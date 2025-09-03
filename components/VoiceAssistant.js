@@ -588,12 +588,7 @@ export default function VoiceAssistant() {
           <div className="w-full max-w-[420px] flex flex-col items-center mb-8 relative">
             <div className="w-full max-w-[420px] flex flex-row items-center justify-start relative gap-2">
               {/* Main button: always visible, shrinks when active */}
-              <div className="relative flex items-center transition-all duration-300"
-                style={{
-                  width: 'calc(100% - 76px)',
-                  maxWidth: 'calc(420px - 76px)',
-                  transition: 'width 0.3s, max-width 0.3s'
-                }}>
+              <div className="flex-shrink-0" style={{width:'calc(100% - 60px)', maxWidth:'352px'}}>
                 <motion.button
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
@@ -683,8 +678,7 @@ export default function VoiceAssistant() {
                 </motion.button>
               </div>
               {/* Microphone mute button: always visible, icon only, color changes, disabled if not active */}
-              <div className="flex items-center h-12 min-w-[48px] min-h-[48px] max-w-[48px] max-h-[48px] ml-4 mr-0"
-                style={{display:'flex',alignItems:'center'}}>
+              <div className="flex-shrink-0" style={{width:'48px', minWidth:'48px', maxWidth:'48px'}}>
                 <button
                   type="button"
                   aria-label={micMuted ? 'Mikrofon einschalten' : 'Mikrofon ausschalten'}
