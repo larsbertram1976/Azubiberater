@@ -14,7 +14,7 @@ export const APP_CONFIG = {
   headerTitleClass: "whitespace-nowrap", // Verhindert Zeilenumbruch bei der Überschrift
   headerDescription: `<span style="font-size:1.05em">Ich bin <b style="color:#df242c">Anna</b>, eure <b style="color:#df242c">KI-Azubiberaterin</b> – die digitale Schwester unserer Personalreferentin & Ausbildungsleiterin.<br />
 Seit 2019 bin ich bei Mölders eure <b style="color:#df242c">Ansprechpartnerin</b> rund um <b style="color:#df242c">Ausbildung</b> & <b style="color:#df242c">Karriere</b>.<br />
-<b>Starte einfach das Gespräch</b> oder nutze die Kontaktmöglichkeiten unten.</span>`, // Beschreibungstext im Header, HTML erlaubt für Hervorhebungen
+<b>Starte einfach das Gespräch</b> und lass dich begeistern.</span>`, // Beschreibungstext im Header, HTML erlaubt für Hervorhebungen
 
   // --- Hauptbutton & Gespräch ---
   buttonTextInactive: 'Gespräch mit KI-Anna starten', // Text auf Hauptbutton, wenn Gespräch nicht aktiv
