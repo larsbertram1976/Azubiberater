@@ -574,12 +574,14 @@ export default function VoiceAssistant() {
             </label>
           </div>
         </div>
-        <div className='flex flex-col items-center mb-8 relative w-full max-w-[420px]'>
-          <div className="w-full max-w-[420px] flex flex-row items-center justify-start relative gap-2" style={{marginBottom: '1px'}}>
+        <div className="w-full max-w-[420px] flex flex-col items-center mb-8 relative">
+          <div className={
+            `w-full max-w-[420px] flex flex-col sm:flex-row items-center justify-start relative gap-2` // Responsive: stack on mobile, row on desktop
+          } style={{marginBottom: '1px'}}>
             {/* Main button: full width when not active, shrinks when active */}
             <div className="relative flex items-center transition-all duration-300"
               style={{
-                width: isActive ? 'calc(100% - 76px)' : '100%', // Noch schmaler: 76px statt 62px
+                width: isActive ? 'calc(100% - 76px)' : '100%',
                 maxWidth: isActive ? 'calc(420px - 76px)' : '420px',
                 transition: 'width 0.3s, max-width 0.3s'
               }}>
@@ -597,7 +599,7 @@ export default function VoiceAssistant() {
                 type="button"
                 style={{
                   height:'48px',
-                  minWidth: isActive ? '352px' : '100%', // Noch schmaler: 352px statt 364px
+                  minWidth: isActive ? '352px' : '100%',
                   maxWidth: isActive ? '352px' : '100%',
                   width: '100%',
                   display: 'flex',
@@ -605,7 +607,7 @@ export default function VoiceAssistant() {
                   justifyContent: 'space-between',
                   position:'relative',
                   transition: 'min-width 0.3s, max-width 0.3s',
-                  marginRight: isActive ? '24px' : 0 // Noch mehr Abstand zum Mute-Button
+                  marginRight: isActive ? '24px' : 0
                 }}
               >
                 <span className="block text-center"
@@ -673,7 +675,8 @@ export default function VoiceAssistant() {
             </div>
             {/* Microphone mute button: only visible when active, icon only, color changes */}
             {isActive && (
-              <div style={{display:'flex',alignItems:'center',height:'48px',marginLeft:'18px',marginRight:'12px'}} className="flex items-center h-12 ml-4 mr-3 min-w-[48px] min-h-[48px] max-w-[48px] max-h-[48px]">
+              <div className="flex items-center h-12 min-w-[48px] min-h-[48px] max-w-[48px] max-h-[48px] mt-2 sm:mt-0 ml-0 sm:ml-4 mr-0 sm:mr-3"
+                style={{display:'flex',alignItems:'center'}}>
                 <button
                   type="button"
                   aria-label={micMuted ? 'Mikrofon einschalten' : 'Mikrofon ausschalten'}
