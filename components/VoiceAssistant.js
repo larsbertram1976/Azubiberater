@@ -587,7 +587,7 @@ export default function VoiceAssistant() {
           </div>
           <div className="w-full max-w-[420px] flex flex-col items-center mb-8 relative">
             <div className="w-full max-w-[420px] flex flex-row items-center justify-start relative gap-2">
-              {/* Main button: always visible, shrinks when active */}
+              {/* Main button: always visible, fixed width so it never overlaps mute button */}
               <div className="flex-shrink-0" style={{width:'calc(100% - 60px)', maxWidth:'352px'}}>
                 <motion.button
                   whileHover={{ scale: 1.03 }}
@@ -603,7 +603,7 @@ export default function VoiceAssistant() {
                   type="button"
                   style={{
                     height:'48px',
-                    minWidth: '352px',
+                    minWidth: 'calc(100vw - 92px)', // On mobile, never full width, leaves space for mute button
                     maxWidth: '352px',
                     width: '100%',
                     display: 'flex',
