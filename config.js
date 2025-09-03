@@ -5,20 +5,22 @@
 // Zentrale Konfiguration für verschiedene Use Cases
 export const APP_CONFIG = {
   // --- Branding & Agent ---
-  appName: 'Möldi', // Name des Assistenten, wird für Branding und UI verwendet
-  agentSticker: 'Möldi', // Sticker-Text, erscheint am Agentenbild
-  agentImage: "/public-pics/Moeldi.png", // Pfad zum Agentenbild
+  appName: 'Anna', // Name des Assistenten, wird für Branding und UI verwendet
+  agentSticker: 'Anna', // Sticker-Text, erscheint am Agentenbild
+  agentImage: "/public-pics/Anna-Avatar-final.jpg", // Pfad zum Agentenbild
 
   // --- Header & Einleitung ---
-  headerTitle: "Hey – Deine Idee zählt!", // Hauptüberschrift im Header
-  headerDescription: `Ich bin <span style=\"font-style:italic;\">Möldi</span>, dein <span style=\"color:#df242c;font-weight:bold;\">KI Ideenassistent</span> bei Mölders.<br />\nTeile mit mir, was dich im Alltag nervt oder wo du Potenzial für Verbesserung siehst.<br />\nAuf Basis deines Inputs entwickeln wir mit KI passende Lösungsansätze – schnell und konkret.<br />\nStarte jetzt das Gespräch und mach uns gemeinsam smarter!`, // Beschreibungstext im Header, HTML erlaubt für Hervorhebungen
+  headerTitle: "Hey – Schön dass Du da bist!", // Hauptüberschrift im Header
+  headerDescription: `Ich bin <b style="color:#df242c">Anna</b>, eure <b style="color:#df242c">KI-Azubiberaterin</b> – die digitale Schwester unserer Personalreferentin & Ausbildungsleiterin.<br />
+Seit 2019 bin ich bei Mölders eure <b style="color:#df242c">Ansprechpartnerin</b> rund um <b style="color:#df242c">Ausbildung</b> & <b style="color:#df242c">Karriere</b>.<br />
+<b style="color:#222">Sprecht mich einfach an</b> – direkt & unkompliziert oder nutz die Kontaktmöglichkeiten unten.`, // Beschreibungstext im Header, HTML erlaubt für Hervorhebungen
 
   // --- Hauptbutton & Gespräch ---
-  buttonTextInactive: 'Gespräch mit KI-Möldi starten', // Text auf Hauptbutton, wenn Gespräch nicht aktiv
-  startConversationButtonText: 'Sprich mit Möldi', // Text auf Hauptbutton, wenn Gespräch aktiv
+  buttonTextInactive: 'Gespräch mit KI-Anna starten', // Text auf Hauptbutton, wenn Gespräch nicht aktiv
+  startConversationButtonText: 'Sprich mit Anna', // Text auf Hauptbutton, wenn Gespräch aktiv
   conversationButtonTexts: [ // Texte, die im Gespräch rotieren (Animation)
     "Gespräch läuft...",
-    "Nenn mir deine Ideen und Anregungen...",
+    "Stell deine Fragen zum Arbeiten bei uns...",
     "Zum Beenden klicken..."
   ],
 
@@ -26,7 +28,7 @@ export const APP_CONFIG = {
   chatToggleShow: "Chatverlauf anzeigen", // Buttontext zum Öffnen des Chatverlaufs
   chatToggleHide: "Chatverlauf zuklappen", // Buttontext zum Schließen des Chatverlaufs
   inputPlaceholder: "Schreib deine Nachricht hier rein ...", // Placeholder im Eingabefeld
-  chatEmptyText: 'Hier erscheint dein Chatverlauf mit Möldi.', // Text, wenn noch keine Nachrichten vorhanden sind
+  chatEmptyText: 'Hier erscheint dein Chatverlauf mit KI-Anna.', // Text, wenn noch keine Nachrichten vorhanden sind
 
   // --- E-Mail & Aktionen ---
   emailButtonText: "E-Mail senden", // Text auf E-Mail-Button unten im Chat
@@ -38,27 +40,27 @@ export const APP_CONFIG = {
       label: "E-Mail senden", // Buttontext
       icon: "mail", // Icon-Typ (wird in UI gemappt)
       url: "mailto:azubianfragen@moelders.de?subject=Anfrage%20Azubiberatung", // Linkziel
-      visible: false // Sichtbarkeit des Buttons
+      visible: true // Sichtbarkeit des Buttons
     },
     {
       label: "WhatsApp",
       icon: "whatsapp",
-      url: "https://wa.me/49123456789",
-      visible: false // Sichtbarkeit des Buttons
+      url: "https://api.whatsapp.com/send/?phone=4915123206142&text=„Hallo+Mölders+Holding+GmbH.+Ich+möchte+gerne+per+WhatsApp+mit+Ihnen+zur+Beantwortung+meiner+Anfragen+kommunizieren.+Ich+bin+damit+einverstanden%2C+dass+hierzu+sowie+zur+Erbringung+des+Dienstes+meine+Daten+%28Daten+aus+meinem+WhatsApp-Profil+und+zu+meinen+genutzten+Endgeräten+sowie+von+mir+mitgeteilte+Daten%29+von+Ihnen+mithilfe+Ihrer+beauftragten+Dienstleister%2C+auch+in+den+USA%2C+verarbeitet+werden.+Mein+Einverständnis+kann+ich+mit+Wirkung+für+die+Zukunft+jederzeit+widerrufen.+Hierfür+sende+ich+ganz+einfach+via+WhatsApp+eine+kurze+Nachricht+mit+„STOP“.+Weitere+Informationen+zum+Datenschutz+finde+ich+hier%3A+https%3A%2F%2Fwww.moelders.de%2Fdatenschutz.+Andere+Kommunikationskanäle+kann+ich+natürlich+weiterhin+nutzen.“&type=phone_number&app_absent=0",
+      visible: true // Sichtbarkeit des Buttons
     },
     {
       label: "Jobbörse",
       icon: "briefcase",
-      url: "https://jobboerse.example.com",
-      visible: false // Sichtbarkeit des Buttons
+      url: "https://www.moelders.de/unternehmen/jobboerse",
+      visible: true // Sichtbarkeit des Buttons
     }
   ],
 
   // --- Datenschutz ---
   privacyLabel: "Ich akzeptiere die Datenschutzrichtlinie", // Labeltext bei Datenschutz-Checkbox
   privacyLink: "https://www.moelders.de/datenschutz", // Link zur Datenschutzseite
-  privacyModalText: `Mit dem Klick auf <b>„Zustimmen“</b> und bei jeder weiteren Interaktion mit diesem KI-Agenten erklärst Du Dich damit einverstanden, dass Deine Kommunikation aufgezeichnet, gespeichert und mit Drittanbietern geteilt wird – wie in der <a href=\"https://www.moelders.de/datenschutz\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"underline text-[#df242c]\">Datenschutzrichtlinie</a> beschrieben.<br /><br />Wenn Du nicht möchtest, dass Deine Gespräche aufgezeichnet werden, verzichte bitte auf die Nutzung dieses Dienstes.<br /><br />`, // Text im Datenschutz-Modal, HTML erlaubt
-  privacyModalAccept: "Annehmen", // Text auf Modal-Button zum Akzeptieren
+  privacyModalText: `Mit dem Klick auf <b>„Zustimmen“</b> und bei jeder weiteren Interaktion mit diesem KI-Agenten erklärst Du Dich damit einverstanden, dass Deine Kommunikation aufgezeichnet, gespeichert und mit Drittanbietern geteilt wird – wie in der <a href=\"https://www.moelders.de/datenschutz\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"underline text-[#df242c]\">Datenschutzrichtlinie</a> beschrieben.<br /><br />Wenn Du nicht möchtest, dass Deine Gespräche aufgezeichnet werden, verzichte bitte auf die Nutzung dieses Dienstes.<br /><br /><b>Hinweis für Jugendliche:</b> Wenn Du 14 Jahre alt bist oder jünger, bitte hole Deine Eltern dazu, damit sie Dich beraten können.`, // Text im Datenschutz-Modal, HTML erlaubt
+  privacyModalAccept: "Zustimmen", // Text auf Modal-Button zum Akzeptieren
   privacyModalDecline: "Ablehnen", // Text auf Modal-Button zum Ablehnen
 
   // --- Hintergrund & Branding ---
@@ -67,8 +69,8 @@ export const APP_CONFIG = {
   secondaryColor: "#b81c24", // Sekundärfarbe
 
   // --- Tab & Favicon ---
-  tabTitle: "Mölders Ideenmanager", // Browser-Tab-Titel
-  tabDescription: "Ideenmanager für Mölders", // Browser-Tab-Beschreibung
+  tabTitle: "Mölders KI Azubiberater", // Browser-Tab-Titel
+  tabDescription: "Azubiberater von Mölders", // Browser-Tab-Beschreibung
   favicon: "/favicon-Moelders.ico", // Favicon-Pfad
 
   // --- Chat Bubble Styles ---

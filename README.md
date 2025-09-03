@@ -1,9 +1,10 @@
-# KIM-Ideengenerator
+# Mölders KI-Azubiberater
 
-Der KIM-Ideengenerator ist ein KI-basierter Assistent für die Mölders Holding, der verschiedene Agenten unterstützt und mit der ElevenLabs API kommuniziert.
+Der Mölders KI-Azubiberater ist ein KI-basierter Assistent für die Mölders Holding, der Jugendliche und Interessierte rund um Ausbildung und Karriere unterstützt. Die Anwendung nutzt die ElevenLabs API für Sprachfunktionen und bietet eine moderne, interaktive Benutzeroberfläche.
 
 ## Features
-- Voice Assistant mit mehreren Agenten (z.B. Möldi, Joshua)
+- KI-basierte Beratung zu Ausbildung und Karriere
+- Voice Assistant mit mehreren Agenten (z.B. Anna, Joshua)
 - Integration der ElevenLabs API für Sprachfunktionen
 - Moderne UI mit Tailwind CSS
 - Next.js Framework
@@ -24,7 +25,7 @@ Der KIM-Ideengenerator ist ein KI-basierter Assistent für die Mölders Holding,
    Erstelle eine `.env`-Datei im Projekt-Root und trage die benötigten Keys ein:
    ```env
    ELEVEN_LABS_API_KEY=your_elevenlabs_api_key
-   NEXT_PUBLIC_AGENT_ID_MOELDI=your_agent_id
+   NEXT_PUBLIC_AGENT_ID_ANNA=your_agent_id
    NEXT_PUBLIC_AGENT_ID_JOSHUA=your_agent_id
    NEXT_PUBLIC_ELEVEN_LABS_API_KEY=your_elevenlabs_api_key
    ```
