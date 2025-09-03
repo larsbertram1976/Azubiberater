@@ -1,17 +1,17 @@
 // Zentrale Konfiguration für verschiedene Use Cases
 export const APP_CONFIG = {
   // --- Branding & Agent ---
-  appName: "Möldi", // Name des Assistenten
-  agentSticker: "Möldi", // Sticker-Text beim Agentenbild
+  appName: 'Möldi', // Name des Assistenten
+  agentSticker: 'Möldi', // Sticker-Text beim Agentenbild
   agentImage: "/public-pics/Moeldi.png", // Agentenbild
 
   // --- Header & Einleitung ---
   headerTitle: "Hey – Deine Idee zählt!", // Hauptüberschrift
-  headerDescription: `Ich bin Möldi, dein digitaler Ideenassistent bei Mölders.<br />\nTeile mit mir, was dich im Alltag nervt oder wo du Potenzial für Verbesserung siehst – ob klein oder groß.<br />\nAuf Basis deines Inputs entwickeln wir mit KI passende Lösungsansätze – schnell und konkret.<br />\nStarte jetzt das Gespräch und mach uns gemeinsam smarter!`, // Beschreibungstext
+  headerDescription: `Ich bin <span style=\"font-style:italic;\">Möldi</span>, dein <span style=\"color:#df242c;font-weight:bold;\">KI Ideenassistent</span> bei Mölders.<br />\nTeile mit mir, was dich im Alltag nervt oder wo du Potenzial für Verbesserung siehst.<br />\nAuf Basis deines Inputs entwickeln wir mit KI passende Lösungsansätze – schnell und konkret.<br />\nStarte jetzt das Gespräch und mach uns gemeinsam smarter!`, // Beschreibungstext
 
   // --- Hauptbutton & Gespräch ---
-  buttonTextInactive: "Gespräch mit KI-Möldi starten", // Text, wenn Gespräch nicht aktiv
-  startConversationButtonText: "Sprich mit Möldi", // Text, wenn Gespräch aktiv
+  buttonTextInactive: 'Gespräch mit KI-Möldi starten', // Text, wenn Gespräch nicht aktiv
+  startConversationButtonText: 'Sprich mit Möldi', // Text, wenn Gespräch aktiv
   conversationButtonTexts: [ // Texte, die im Gespräch rotieren
     "Gespräch läuft...",
     "Nenn mir deine Ideen und Anregungen...",
@@ -22,7 +22,7 @@ export const APP_CONFIG = {
   chatToggleShow: "Chatverlauf anzeigen", // Button zum Öffnen des Chatverlaufs
   chatToggleHide: "Chatverlauf zuklappen", // Button zum Schließen des Chatverlaufs
   inputPlaceholder: "Schreib deine Nachricht hier rein ...", // Placeholder im Eingabefeld
-  chatEmptyText: "Hier erscheint dein Chatverlauf mit Möldi.", // Text, wenn noch keine Nachrichten
+  chatEmptyText: 'Hier erscheint dein Chatverlauf mit Möldi.', // Text, wenn noch keine Nachrichten
 
   // --- E-Mail & Aktionen ---
   emailButtonText: "E-Mail senden", // Text auf E-Mail-Button
