@@ -10,7 +10,7 @@ export const APP_CONFIG = {
   agentImage: "/public-pics/Anna-Avatar-final.jpg", // Pfad zum Agentenbild
 
   // --- Header & Einleitung ---
-  headerTitle: "Hey – Schön dass Du da bist!", // Hauptüberschrift im Header
+  headerTitle: "Hey, schön dass Du da bist!", // Hauptüberschrift im Header
   headerTitleClass: "whitespace-nowrap", // Verhindert Zeilenumbruch bei der Überschrift
   headerDescription: `<span style="font-size:1.05em">Ich bin <b style="color:#df242c">Anna</b>, eure <b style="color:#df242c">KI-Azubiberaterin</b> – die digitale Schwester unserer Personalreferentin & Ausbildungsleiterin.<br />
 Seit 2019 bin ich bei Mölders eure <b style="color:#df242c">Ansprechpartnerin</b> rund um <b style="color:#df242c">Ausbildung</b> & <b style="color:#df242c">Karriere</b>.<br />
