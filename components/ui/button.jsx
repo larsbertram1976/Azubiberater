@@ -1,3 +1,7 @@
+// UI-Komponente für Buttons
+// Stellt einheitliche, responsive und barrierefreie Buttons bereit
+// Nutzt zentrale Styles und Props für verschiedene Button-Typen
+
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva } from "class-variance-authority";

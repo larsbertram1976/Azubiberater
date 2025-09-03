@@ -1,3 +1,7 @@
+// UI-Komponente für Karten (Card)
+// Dient als Container für Inhalte mit abgesetztem Hintergrund und Schatten
+// Nutzt zentrale Styles und Props
+
 import * as React from "react"
 
 import { cn } from "@/lib/utils"

@@ -1,3 +1,7 @@
+// UI-Komponente für Badges
+// Zeigt kleine Label-Elemente für Status, Hinweise oder Kategorien
+// Nutzt zentrale Styles und Props
+
 import * as React from "react"
 import { cva } from "class-variance-authority";
 

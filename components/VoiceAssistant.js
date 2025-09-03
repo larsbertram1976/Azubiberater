@@ -1,3 +1,10 @@
+// Haupt-Komponente für den KI-Voice-Chat-Assistenten
+// Steuert das UI, die Konversation, Mikrofon, Chatverlauf, Aktionsbuttons und alle Interaktionen
+// Nutzt zentrale Konfiguration aus config.js
+// Responsive und mobile-optimiert
+// Enthält alle Logik für ElevenLabs SDK, Mikrofon-Mute, Chatverlauf, Animationen, etc.
+// Siehe Kommentare in den jeweiligen Funktionsblöcken für Details
+
 // components/VoiceAssistant.jsx
 'use client'
 

@@ -1,75 +1,79 @@
+// Zentrale Konfiguration aller UI-Elemente, Farben, Texte, Agentenbilder, Aktionsbuttons, Datenschutz, Animationen etc.
+// Alle Anpassungen für Branding, Layout und Verhalten erfolgen hier
+// Wird von allen Komponenten für einheitliches Design und Verhalten verwendet
+
 // Zentrale Konfiguration für verschiedene Use Cases
 export const APP_CONFIG = {
   // --- Branding & Agent ---
-  appName: 'Möldi', // Name des Assistenten
-  agentSticker: 'Möldi', // Sticker-Text beim Agentenbild
-  agentImage: "/public-pics/Moeldi.png", // Agentenbild
+  appName: 'Möldi', // Name des Assistenten, wird für Branding und UI verwendet
+  agentSticker: 'Möldi', // Sticker-Text, erscheint am Agentenbild
+  agentImage: "/public-pics/Moeldi.png", // Pfad zum Agentenbild
 
   // --- Header & Einleitung ---
-  headerTitle: "Hey – Deine Idee zählt!", // Hauptüberschrift
-  headerDescription: `Ich bin <span style=\"font-style:italic;\">Möldi</span>, dein <span style=\"color:#df242c;font-weight:bold;\">KI Ideenassistent</span> bei Mölders.<br />\nTeile mit mir, was dich im Alltag nervt oder wo du Potenzial für Verbesserung siehst.<br />\nAuf Basis deines Inputs entwickeln wir mit KI passende Lösungsansätze – schnell und konkret.<br />\nStarte jetzt das Gespräch und mach uns gemeinsam smarter!`, // Beschreibungstext
+  headerTitle: "Hey – Deine Idee zählt!", // Hauptüberschrift im Header
+  headerDescription: `Ich bin <span style=\"font-style:italic;\">Möldi</span>, dein <span style=\"color:#df242c;font-weight:bold;\">KI Ideenassistent</span> bei Mölders.<br />\nTeile mit mir, was dich im Alltag nervt oder wo du Potenzial für Verbesserung siehst.<br />\nAuf Basis deines Inputs entwickeln wir mit KI passende Lösungsansätze – schnell und konkret.<br />\nStarte jetzt das Gespräch und mach uns gemeinsam smarter!`, // Beschreibungstext im Header, HTML erlaubt für Hervorhebungen
 
   // --- Hauptbutton & Gespräch ---
-  buttonTextInactive: 'Gespräch mit KI-Möldi starten', // Text, wenn Gespräch nicht aktiv
-  startConversationButtonText: 'Sprich mit Möldi', // Text, wenn Gespräch aktiv
-  conversationButtonTexts: [ // Texte, die im Gespräch rotieren
+  buttonTextInactive: 'Gespräch mit KI-Möldi starten', // Text auf Hauptbutton, wenn Gespräch nicht aktiv
+  startConversationButtonText: 'Sprich mit Möldi', // Text auf Hauptbutton, wenn Gespräch aktiv
+  conversationButtonTexts: [ // Texte, die im Gespräch rotieren (Animation)
     "Gespräch läuft...",
     "Nenn mir deine Ideen und Anregungen...",
     "Zum Beenden klicken..."
   ],
 
   // --- Chatbereich ---
-  chatToggleShow: "Chatverlauf anzeigen", // Button zum Öffnen des Chatverlaufs
-  chatToggleHide: "Chatverlauf zuklappen", // Button zum Schließen des Chatverlaufs
+  chatToggleShow: "Chatverlauf anzeigen", // Buttontext zum Öffnen des Chatverlaufs
+  chatToggleHide: "Chatverlauf zuklappen", // Buttontext zum Schließen des Chatverlaufs
   inputPlaceholder: "Schreib deine Nachricht hier rein ...", // Placeholder im Eingabefeld
-  chatEmptyText: 'Hier erscheint dein Chatverlauf mit Möldi.', // Text, wenn noch keine Nachrichten
+  chatEmptyText: 'Hier erscheint dein Chatverlauf mit Möldi.', // Text, wenn noch keine Nachrichten vorhanden sind
 
   // --- E-Mail & Aktionen ---
-  emailButtonText: "E-Mail senden", // Text auf E-Mail-Button
-  mailUrl: "mailto:azubianfragen@moelders.de?subject=Anfrage%20Azubiberatung", // E-Mail-Link
+  emailButtonText: "E-Mail senden", // Text auf E-Mail-Button unten im Chat
+  mailUrl: "mailto:azubianfragen@moelders.de?subject=Anfrage%20Azubiberatung", // E-Mail-Link für Aktionsbutton
 
   // --- Aktionsbuttons unten im Chat ---
   actionButtons: [
     {
-      label: "E-Mail senden",
-      icon: "mail", // z.B. React-Icon-Komponente oder String
-      url: "mailto:azubianfragen@moelders.de?subject=Anfrage%20Azubiberatung",
-      visible: false
+      label: "E-Mail senden", // Buttontext
+      icon: "mail", // Icon-Typ (wird in UI gemappt)
+      url: "mailto:azubianfragen@moelders.de?subject=Anfrage%20Azubiberatung", // Linkziel
+      visible: false // Sichtbarkeit des Buttons
     },
     {
       label: "WhatsApp",
       icon: "whatsapp",
       url: "https://wa.me/49123456789",
-      visible: false // auf true setzen, wenn anzeigen
+      visible: false // Sichtbarkeit des Buttons
     },
     {
       label: "Jobbörse",
       icon: "briefcase",
       url: "https://jobboerse.example.com",
-      visible: false
+      visible: false // Sichtbarkeit des Buttons
     }
   ],
 
   // --- Datenschutz ---
-  privacyLabel: "Ich akzeptiere die Datenschutzrichtlinie", // Label bei Checkbox
+  privacyLabel: "Ich akzeptiere die Datenschutzrichtlinie", // Labeltext bei Datenschutz-Checkbox
   privacyLink: "https://www.moelders.de/datenschutz", // Link zur Datenschutzseite
-  privacyModalText: `Mit dem Klick auf <b>„Zustimmen“</b> und bei jeder weiteren Interaktion mit diesem KI-Agenten erklärst Du Dich damit einverstanden, dass Deine Kommunikation aufgezeichnet, gespeichert und mit Drittanbietern geteilt wird – wie in der <a href=\"https://www.moelders.de/datenschutz\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"underline text-[#df242c]\">Datenschutzrichtlinie</a> beschrieben.<br /><br />Wenn Du nicht möchtest, dass Deine Gespräche aufgezeichnet werden, verzichte bitte auf die Nutzung dieses Dienstes.<br /><br />`, // Text im Datenschutz-Modal
-  privacyModalAccept: "Annehmen", // Button im Modal
-  privacyModalDecline: "Ablehnen", // Button im Modal
+  privacyModalText: `Mit dem Klick auf <b>„Zustimmen“</b> und bei jeder weiteren Interaktion mit diesem KI-Agenten erklärst Du Dich damit einverstanden, dass Deine Kommunikation aufgezeichnet, gespeichert und mit Drittanbietern geteilt wird – wie in der <a href=\"https://www.moelders.de/datenschutz\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"underline text-[#df242c]\">Datenschutzrichtlinie</a> beschrieben.<br /><br />Wenn Du nicht möchtest, dass Deine Gespräche aufgezeichnet werden, verzichte bitte auf die Nutzung dieses Dienstes.<br /><br />`, // Text im Datenschutz-Modal, HTML erlaubt
+  privacyModalAccept: "Annehmen", // Text auf Modal-Button zum Akzeptieren
+  privacyModalDecline: "Ablehnen", // Text auf Modal-Button zum Ablehnen
 
   // --- Hintergrund & Branding ---
-  backgroundImage: "/public-pics/Leuchtturm.png", // Hintergrundbild
-  primaryColor: "#df242c", // Hauptfarbe (z.B. Buttons, Agent)
+  backgroundImage: "/public-pics/Leuchtturm.png", // Hintergrundbild für die App
+  primaryColor: "#df242c", // Hauptfarbe für Buttons, Agent etc.
   secondaryColor: "#b81c24", // Sekundärfarbe
 
   // --- Tab & Favicon ---
   tabTitle: "Mölders Ideenmanager", // Browser-Tab-Titel
   tabDescription: "Ideenmanager für Mölders", // Browser-Tab-Beschreibung
-  favicon: "/favicon-Moelders.ico", // Favicon
+  favicon: "/favicon-Moelders.ico", // Favicon-Pfad
 
   // --- Chat Bubble Styles ---
-  agentBubbleClass: 'bg-[#df242c] text-white', // Agenten-Bubble: Hintergrund/Text
-  userBubbleClass: 'bg-[#ededed] text-[#252422]', // User-Bubble: Hintergrund/Text
+  agentBubbleClass: 'bg-[#df242c] text-white', // CSS-Klassen für Agenten-Bubble
+  userBubbleClass: 'bg-[#ededed] text-[#252422]', // CSS-Klassen für User-Bubble
 
   // --- UI Farben & Styles ---
   mainButtonColor: '#df242c', // Hauptbutton-Farbe
@@ -78,14 +82,14 @@ export const APP_CONFIG = {
   mainButtonBorderColor: '#df242c', // Rahmenfarbe Hauptbutton
   mainButtonDisabledOpacity: 0.5, // Opazität bei deaktiviertem Button
 
-  muteButtonColor: '#ededed', // Mikrofon-Button Standard
-  muteButtonMutedColor: 'orange', // Mikrofon-Button wenn gemutet
-  muteButtonMutedBg: 'bg-orange-400', // Mikrofon-Button gemutet Hintergrund
-  muteButtonMutedText: 'text-white', // Mikrofon-Button gemutet Text
-  muteButtonMutedBorder: 'border-orange-400', // Mikrofon-Button gemutet Rahmen
-  muteButtonUnmutedBg: 'bg-[#ededed]', // Mikrofon-Button unmuted Hintergrund
-  muteButtonUnmutedText: 'text-[#252422]', // Mikrofon-Button unmuted Text
-  muteButtonUnmutedBorder: 'border-gray-300', // Mikrofon-Button unmuted Rahmen
+  muteButtonColor: '#ededed', // Mikrofon-Button Standardfarbe
+  muteButtonMutedColor: 'orange', // Mikrofon-Button Farbe wenn gemutet
+  muteButtonMutedBg: 'bg-orange-400', // Mikrofon-Button Hintergrund gemutet
+  muteButtonMutedText: 'text-white', // Mikrofon-Button Textfarbe gemutet
+  muteButtonMutedBorder: 'border-orange-400', // Mikrofon-Button Rahmen gemutet
+  muteButtonUnmutedBg: 'bg-[#ededed]', // Mikrofon-Button Hintergrund unmuted
+  muteButtonUnmutedText: 'text-[#252422]', // Mikrofon-Button Textfarbe unmuted
+  muteButtonUnmutedBorder: 'border-gray-300', // Mikrofon-Button Rahmen unmuted
   muteButtonHoverBg: 'hover:bg-[#df242c]', // Mikrofon-Button Hover Hintergrund
   muteButtonHoverText: 'hover:text-white', // Mikrofon-Button Hover Text
 
@@ -94,31 +98,31 @@ export const APP_CONFIG = {
   chatLinkColor: 'text-blue-600', // Linkfarbe im Chat
   chatLinkHoverColor: 'hover:text-blue-800', // Linkfarbe im Chat bei Hover
 
-  privacyAcceptBg: 'bg-[#df242c]', // Datenschutz-Modal: Annehmen Button Hintergrund
-  privacyAcceptText: 'text-white', // Datenschutz-Modal: Annehmen Button Text
-  privacyAcceptHoverBg: 'hover:bg-[#b81c24]', // Datenschutz-Modal: Annehmen Button Hover
-  privacyDeclineBg: 'bg-gray-200', // Datenschutz-Modal: Ablehnen Button Hintergrund
-  privacyDeclineText: 'text-gray-700', // Datenschutz-Modal: Ablehnen Button Text
-  privacyDeclineHoverBg: 'hover:bg-gray-300', // Datenschutz-Modal: Ablehnen Button Hover
-  privacyModalBorder: 'border-[#eee]', // Datenschutz-Modal: Rahmen
+  privacyAcceptBg: 'bg-[#df242c]', // Datenschutz-Modal: Hintergrund Annehmen-Button
+  privacyAcceptText: 'text-white', // Datenschutz-Modal: Textfarbe Annehmen-Button
+  privacyAcceptHoverBg: 'hover:bg-[#b81c24]', // Datenschutz-Modal: Hover Hintergrund Annehmen-Button
+  privacyDeclineBg: 'bg-gray-200', // Datenschutz-Modal: Hintergrund Ablehnen-Button
+  privacyDeclineText: 'text-gray-700', // Datenschutz-Modal: Textfarbe Ablehnen-Button
+  privacyDeclineHoverBg: 'hover:bg-gray-300', // Datenschutz-Modal: Hover Hintergrund Ablehnen-Button
+  privacyModalBorder: 'border-[#eee]', // Datenschutz-Modal: Rahmenfarbe
 
-  agentImageBorder: 'border-[#df242c]', // Rahmen um Agentenbild
+  agentImageBorder: 'border-[#df242c]', // Rahmenfarbe um Agentenbild
 
   // --- SVG Farben ---
   svgCheckColor: '#fff', // Farbe für Check-Icon
   svgBarColor: '#222', // Farbe für Balken-Icons
 
   // --- Animationen ---
-  animationProfilePulse: 'profile-pulse 1.6s cubic-bezier(0.4,0,0.2,1) infinite', // Agentenbild-Puls
+  animationProfilePulse: 'profile-pulse 1.6s cubic-bezier(0.4,0,0.2,1) infinite', // Puls-Animation Agentenbild
   animationPulseSpinSlow: 'pulse-spin-slow 2.5s linear infinite', // Glow-Effekt langsam
   animationPulseSpinRev: 'pulse-spin-rev 2.2s linear infinite', // Glow-Effekt reverse
   animationPulseScale: 'pulse-scale 2.8s ease-in-out infinite', // Glow-Effekt scale
-  animationMarquee: 'marquee 8s linear infinite', // Marquee-Text
+  animationMarquee: 'marquee 8s linear infinite', // Marquee-Text Animation
 
   // --- Card & Badge Styles ---
-  cardBg: 'bg-card', // Card Hintergrund
-  cardText: 'text-card-foreground', // Card Text
-  badgeBg: 'bg-primary', // Badge Hintergrund
-  badgeText: 'text-primary-foreground' // Badge Text
+  cardBg: 'bg-card', // Card Hintergrundfarbe
+  cardText: 'text-card-foreground', // Card Textfarbe
+  badgeBg: 'bg-primary', // Badge Hintergrundfarbe
+  badgeText: 'text-primary-foreground' // Badge Textfarbe
 }
 // --- Ende APP_CONFIG ---
