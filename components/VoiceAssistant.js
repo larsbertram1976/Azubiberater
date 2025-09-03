@@ -673,14 +673,14 @@ export default function VoiceAssistant() {
             </div>
             {/* Microphone mute button: only visible when active, icon only, color changes */}
             {isActive && (
-              <div style={{display:'flex',alignItems:'center',height:'48px',marginLeft:'18px',marginRight:'12px'}}>
+              <div style={{display:'flex',alignItems:'center',height:'48px',marginLeft:'18px',marginRight:'12px'}} className="flex items-center h-12 ml-4 mr-3 min-w-[48px] min-h-[48px] max-w-[48px] max-h-[48px]">
                 <button
                   type="button"
                   aria-label={micMuted ? 'Mikrofon einschalten' : 'Mikrofon ausschalten'}
                   onClick={() => setMicMuted(muted => !muted)}
                   className={`flex items-center justify-center px-0 py-0 rounded-full shadow font-semibold text-base border transition-colors`
                     + (micMuted ? ' bg-orange-400 text-white border-orange-400 hover:bg-orange-500' : ' bg-[#ededed] text-[#252422] border-gray-300 hover:bg-[#df242c] hover:text-white')}
-                  style={{width:'48px',height:'48px',minWidth:'48px',minHeight:'48px'}}
+                  style={{width:'48px',height:'48px',minWidth:'48px',minHeight:'48px',maxWidth:'48px',maxHeight:'48px'}}
                 >
                   {micMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
                 </button>
