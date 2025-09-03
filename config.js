@@ -11,13 +11,14 @@ export const APP_CONFIG = {
 
   // --- Header & Einleitung ---
   headerTitle: "Hey – Schön dass Du da bist!", // Hauptüberschrift im Header
+  headerTitleClass: "whitespace-nowrap", // Verhindert Zeilenumbruch bei der Überschrift
   headerDescription: `<span style="font-size:1.05em">Ich bin <b style="color:#df242c">Anna</b>, eure <b style="color:#df242c">KI-Azubiberaterin</b> – die digitale Schwester unserer Personalreferentin & Ausbildungsleiterin.<br />
 Seit 2019 bin ich bei Mölders eure <b style="color:#df242c">Ansprechpartnerin</b> rund um <b style="color:#df242c">Ausbildung</b> & <b style="color:#df242c">Karriere</b>.<br />
-<b style="color:#222">Sprecht mich einfach an</b> – direkt & unkompliziert oder nutz die Kontaktmöglichkeiten unten.</span>`, // Beschreibungstext im Header, HTML erlaubt für Hervorhebungen
+<b>Starte einfach das Gespräch</b> oder nutze die Kontaktmöglichkeiten unten.</span>`, // Beschreibungstext im Header, HTML erlaubt für Hervorhebungen
 
   // --- Hauptbutton & Gespräch ---
   buttonTextInactive: 'Gespräch mit KI-Anna starten', // Text auf Hauptbutton, wenn Gespräch nicht aktiv
-  startConversationButtonText: 'Sprich mit Anna', // Text auf Hauptbutton, wenn Gespräch aktiv
+  startConversationButtonText: 'Sprich mit KI-Anna', // Text auf Hauptbutton, wenn Gespräch aktiv
   conversationButtonTexts: [ // Texte, die im Gespräch rotieren (Animation)
     "Gespräch läuft...",
     "Stell deine Fragen zum Arbeiten bei uns...",
