@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Mic, MicOff, MessageCircle, Bot, User, Download, Mail } from 'lucide-react'
+import { Mic, MicOff, MessageCircle, Bot, User, Download, Mail, Send, ArrowUp } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { downloadTranscript } from '@/utils/transcript'
 import { Conversation } from '@elevenlabs/client'
@@ -11,12 +11,12 @@ import getConfig from 'next/config'
 import { getSignedUrl } from '@/app/actions/getSignedUrl'
 import { useConversation } from '@elevenlabs/react'
 import { APP_CONFIG } from '../config'
+import { FaWhatsapp } from 'react-icons/fa';
+import { FaBriefcase } from 'react-icons/fa';
 
 const { publicRuntimeConfig } = getConfig?.() || {}
 
-const AGENT_IDS = {
-  moeldi: process.env.NEXT_PUBLIC_AGENT_ID_MOELDI,
-}
+const AGENT_ID = process.env.NEXT_PUBLIC_AGENT_ID || process.env.NEXT_PUBLIC_AGENT_ID_MOELDI;
 
 let recognitionGlobal = null // global fallback for SpeechRecognition
 
@@ -33,7 +33,7 @@ export default function VoiceAssistant() {
   const [showPrivacyModal, setShowPrivacyModal] = useState(false)
   const [privacyAccepted, setPrivacyAccepted] = useState(false)
   const [pendingAgentMessage, setPendingAgentMessage] = useState(false)
-  const [selectedAgent, setSelectedAgent] = useState('moeldi') // 'moeldi'
+  const [selectedAgent, setSelectedAgent] = useState(AGENT_ID)
   const scrollAreaRef = useRef(null)
   const recognitionRef = useRef(null)
 
@@ -46,13 +46,14 @@ export default function VoiceAssistant() {
   const [audioLevel, setAudioLevel] = useState(0)
   const [signedUrl, setSignedUrl] = useState(null)
   const [conversationId, setConversationId] = useState(null) // State für conversationId
-  const [isMuted, setIsMuted] = useState(false) // State für Mikrofon-Stummschaltung
-  const micStreamRef = useRef(null)
+  const [micMuted, setMicMuted] = useState(false) // ElevenLabs SDK mute state
   const [isChatOpen, setIsChatOpen] = useState(false)
 
   // Animation für nacheinander fade-in/fade-out Text, Endlosschleife
   const conversationButtonTexts = APP_CONFIG.conversationButtonTexts
   const [conversationTextIndex, setConversationTextIndex] = useState(0)
+  const [typewriterText, setTypewriterText] = useState("");
+  const typewriterSpeed = 28; // ms per character
 
   useEffect(() => {
     if (!isActive) {
@@ -65,6 +66,39 @@ export default function VoiceAssistant() {
     }, 2500)
     return () => clearTimeout(t)
   }, [isActive, conversationTextIndex])
+
+  useEffect(() => {
+    // Only typewriter for the second text (index 1)
+    if (isActive && conversationTextIndex === 1) {
+      setTypewriterText("");
+      const fullText = conversationButtonTexts[1];
+      let i = 0;
+      const interval = setInterval(() => {
+        setTypewriterText(fullText.slice(0, i + 1));
+        i++;
+        if (i >= fullText.length) clearInterval(interval);
+      }, typewriterSpeed);
+      return () => clearInterval(interval);
+    } else {
+      setTypewriterText("");
+    }
+  }, [isActive, conversationTextIndex, conversationButtonTexts]);
+
+  // Add global style for marquee animation
+  useEffect(() => {
+    if (typeof document !== 'undefined' && !document.getElementById('marquee-style')) {
+      const style = document.createElement('style');
+      style.id = 'marquee-style';
+      style.innerHTML = `
+        @keyframes marquee {
+          0% { transform: translateX(100%); }
+          100% { transform: translateX(-100%); }
+        }
+        .animate-marquee { will-change: transform; }
+      `;
+      document.head.appendChild(style);
+    }
+  }, []);
 
   // ElevenLabs Conversation Hook für Multimodalität
   const {
@@ -80,17 +114,17 @@ export default function VoiceAssistant() {
     muteTTS,
     unmuteTTS,
   } = useConversation({
-    agentId: AGENT_IDS[selectedAgent],
+    agentId: selectedAgent,
+    micMuted, // Pass mute state to SDK
     onMessage: (message) => {
       setMessages((prev) => {
-        // Streaming: Wenn Agent, hänge an letzte Agenten-Nachricht an
         // Streaming: Wenn Agent, hänge an letzte Agenten-Nachricht an
         if (message.source === 'agent') {
           if (prev.length > 0 && prev[prev.length-1].source === 'agent' && pendingAgentMessage) {
             // Stream: Update letzte Agenten-Nachricht
-            const updated = [...prev]
-            updated[updated.length-1].message += message.message
-            return updated
+            const updatedMessages = [...prev]
+            updatedMessages[updatedMessages.length-1].message += message.message
+            return updatedMessages
           } else {
             // Neue Agenten-Nachricht
             return [...prev, { source: message.source, message: message.message }]
@@ -147,7 +181,7 @@ export default function VoiceAssistant() {
 
   // Mikrofon starten/stoppen (Instanz bleibt erhalten)
   const startMic = () => {
-    if (recognitionRef.current && !isMuted) {
+    if (recognitionRef.current) {
       try { recognitionRef.current.start() } catch (e) {}
     }
   }
@@ -157,85 +191,6 @@ export default function VoiceAssistant() {
       try { recognitionRef.current.abort() } catch (e) {}
     }
   }
-
-  // Mikrofon-Stream holen und verwalten
-  useEffect(() => {
-    if (!isActive) {
-      // Gespräch beendet: Stream freigeben
-      if (micStreamRef.current) {
-        micStreamRef.current.getTracks().forEach(track => track.stop())
-        micStreamRef.current = null
-      }
-      return
-    }
-    // Nur holen, wenn noch kein Stream existiert
-    if (!micStreamRef.current) {
-      navigator.mediaDevices.getUserMedia({ audio: true })
-        .then(stream => {
-          micStreamRef.current = stream
-          stream.getAudioTracks().forEach(track => { track.enabled = !isMuted }) // <-- Mute-Logik direkt anwenden
-        })
-        .catch(() => { micStreamRef.current = null })
-    } else {
-      // Immer Mute-Logik anwenden, falls sich isMuted geändert hat
-      micStreamRef.current.getAudioTracks().forEach(track => { track.enabled = !isMuted })
-    }
-  }, [isActive, isMuted]) // <-- isMuted als Dependency
-
-  // Immer nach jedem neuen Stream und nach jeder Chat-Interaktion Mute-Logik anwenden
-  useEffect(() => {
-    if (micStreamRef.current) {
-      micStreamRef.current.getAudioTracks().forEach(track => { track.enabled = !isMuted })
-    }
-  }, [micStreamRef.current, isMuted])
-
-  // Mikrofon wirklich muten/unmuten (OS/Browser-Level, robust)
-  useEffect(() => {
-    if (!isActive || !micStreamRef.current) return
-    micStreamRef.current.getAudioTracks().forEach(track => {
-      track.enabled = !isMuted
-    })
-  }, [isMuted, isActive])
-
-  // Mikrofon-Mute-Logik: Wenn isMuted sich ändert, stoppe oder starte das Mic
-  useEffect(() => {
-    if (!isActive) return // Nur wenn Gespräch läuft
-    if (isMuted) {
-      if (recognitionRef.current) {
-        try { recognitionRef.current.stop() } catch (e) {}
-        try { recognitionRef.current.abort() } catch (e) {}
-      }
-    } else {
-      if (recognitionRef.current) {
-        try { recognitionRef.current.start() } catch (e) {}
-      }
-    }
-  }, [isMuted, isActive])
-
-  // Wenn Gespräch läuft, Instanz erzeugen und Mic starten/stoppen je nach Mute
-  useEffect(() => {
-    if (isActive) {
-      if (!recognitionRef.current) createRecognition()
-      startMic()
-    } else {
-      // Gespräch beendet: Instanz zerstören
-      if (recognitionRef.current) {
-        try { recognitionRef.current.stop() } catch (e) {}
-        recognitionRef.current = null
-        recognitionGlobal = null
-      }
-    }
-  }, [isActive])
-
-  // Debug: Logge den Status der Tracks bei jedem Mute/Unmute
-  useEffect(() => {
-    if (micStreamRef.current) {
-      micStreamRef.current.getAudioTracks().forEach(track => {
-        track.enabled = !isMuted;
-        console.log('MicTrack:', track.label, 'enabled:', track.enabled, 'muted:', isMuted);
-      });
-    }
-  }, [isMuted])
 
   // Initialisiere Conversation
   const startConversation = useCallback(async () => {
@@ -384,22 +339,35 @@ export default function VoiceAssistant() {
     }
   }, [])
 
-  // Funktion zum Stummschalten/Entstummen des Mikrofons (nur SpeechRecognition, keine SDK muteMic)
-  const handleMuteToggle = useCallback(() => {
-    setIsMuted(prev => !prev)
-  }, [])
-
-  // --- Hilfskomponente für Aktionsbuttons (E-Mail) ---
+  // --- Hilfskomponente für Aktionsbuttons (unten im Chat) ---
   function ActionButtons({ size = 'sm' }) {
-    // Nur E-Mail Button, volle Breite wie Chatfenster-Button
-    const base = 'w-full flex items-center justify-center px-4 py-2 text-sm font-normal rounded-2xl h-12 whitespace-nowrap gap-2 bg-[#ededed] text-[#252422] shadow hover:bg-[#df242c] hover:text-white text-center transition-colors';
+    // Filtere nur sichtbare Buttons
+    const visibleButtons = APP_CONFIG.actionButtons.filter(btn => btn.visible);
+    const btnCount = visibleButtons.length;
+    // Responsive: Buttons immer gleich groß, kein Umbruch, feste Höhe
+    const widthClass = btnCount === 1 ? 'w-full' : btnCount === 2 ? 'w-1/2' : 'w-1/3';
     return (
-      <a href={APP_CONFIG.mailUrl} target="_blank" rel="noopener noreferrer"
-        className={base}
-        style={{lineHeight:'1.1', maxWidth: '420px'}}>
-        <Mail className="w-[18px] h-[18px] mr-2" strokeWidth={1.8} />
-        <span className="leading-none">{APP_CONFIG.emailButtonText}</span>
-      </a>
+      <div className={`flex gap-2 w-full flex-nowrap`}>
+        {visibleButtons.map((btn, idx) => {
+          let Icon = null;
+          if (btn.icon === 'mail') Icon = Mail;
+          if (btn.icon === 'whatsapp') Icon = FaWhatsapp;
+          if (btn.icon === 'briefcase') Icon = FaBriefcase;
+          return (
+            <a
+              key={btn.label}
+              href={btn.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`${widthClass} flex items-center justify-center px-2 py-1 text-xs font-normal rounded-xl h-8 whitespace-nowrap gap-1 bg-[#ededed] text-[#252422] shadow hover:bg-[#df242c] hover:text-white text-center transition-colors`}
+              style={{lineHeight:'1.1', maxWidth: btnCount === 1 ? '420px' : undefined, minWidth:0, flex:'1 1 0', height:'2rem'}}
+            >
+              {Icon && <Icon className="w-4 h-4 mr-1" strokeWidth={1.8} />}
+              <span className="leading-none" style={{whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>{btn.label}</span>
+            </a>
+          );
+        })}
+      </div>
     );
   }
 
@@ -411,6 +379,14 @@ export default function VoiceAssistant() {
   function handleFormSubmit(e) {
     e.preventDefault();
     handleSend();
+  }
+
+  // Helper for dynamic marquee duration
+  function getMarqueeDuration(text) {
+    // 12s for 60 chars, scale linearly
+    const baseDuration = 12;
+    const baseLength = 60;
+    return Math.max(baseDuration, Math.round((text.length/baseLength)*baseDuration));
   }
 
   return (
@@ -531,7 +507,7 @@ export default function VoiceAssistant() {
               />
               {/* Audio-Element (hidden, wird von SDK gesteuert) */}
               <audio ref={audioRef} style={{display:'none'}} />
-              {isSpeaking && (
+              {isSpeaking && isActive && (
                 <>
                   <span className="absolute inset-0 flex items-center justify-center z-0 pointer-events-none">
                     <span className="block w-52 h-52 rounded-full bg-gradient-to-tr from-[#df242c] via-[#ff6f61] to-[#df242c] opacity-20 animate-pulse-spin-slow blur-[4px]" style={{position:'absolute'}}></span>
@@ -557,7 +533,7 @@ export default function VoiceAssistant() {
                 <img
                   src={APP_CONFIG.agentImage}
                   alt="Möldi, Azubiberaterin"
-                  className={`object-cover shadow rounded-full border-4 border-[#df242c] transition-all duration-300 relative w-44 h-44 z-10${isSpeaking ? ' animate-profile-pulse' : ''}`}
+                  className={`object-cover shadow rounded-full border-4 border-[#df242c] transition-all duration-300 relative w-44 h-44 z-10${isSpeaking && isActive ? ' animate-profile-pulse' : ''}`}
                   style={{willChange: 'transform'}}
                 />
                 {/* Möldi-Sticker */}
@@ -598,13 +574,17 @@ export default function VoiceAssistant() {
             </label>
           </div>
         </div>
-        {/* Gespräch starten Button + Status-Kreis exakt wie Chatfenster, Status-Kreis zentriert */}
         <div className='flex flex-col items-center mb-8 relative w-full max-w-[420px]'>
-          <div className="w-full max-w-[420px] flex flex-row items-center justify-end relative gap-2">
-            {/* Main button: always full width, no layout shift when active */}
-            <div className="relative flex items-center transition-all duration-200 w-full max-w-[420px]">
+          <div className="w-full max-w-[420px] flex flex-row items-center justify-start relative gap-2" style={{marginBottom: '1px'}}>
+            {/* Main button: full width when not active, shrinks when active */}
+            <div className="relative flex items-center transition-all duration-300"
+              style={{
+                width: isActive ? 'calc(100% - 76px)' : '100%', // Noch schmaler: 76px statt 62px
+                maxWidth: isActive ? 'calc(420px - 76px)' : '420px',
+                transition: 'width 0.3s, max-width 0.3s'
+              }}>
               <motion.button
-                whileHover={{ scale: 1.05 }}
+                whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
                 onClick={isActive ? endConversation : startConversation}
                 className={`pr-4 pl-6 py-2 rounded-2xl text-base font-semibold shadow-md transition-all duration-200 focus:outline-none flex-grow flex-shrink flex items-center justify-between relative w-full`
@@ -615,9 +595,34 @@ export default function VoiceAssistant() {
                 aria-label={isActive ? 'Gespräch beenden' : 'Gespräch starten'}
                 disabled={!privacyChecked && !isActive}
                 type="button"
-                style={{height:'48px', minWidth:0, width: '100%', maxWidth: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position:'relative'}}
+                style={{
+                  height:'48px',
+                  minWidth: isActive ? '352px' : '100%', // Noch schmaler: 352px statt 364px
+                  maxWidth: isActive ? '352px' : '100%',
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  position:'relative',
+                  transition: 'min-width 0.3s, max-width 0.3s',
+                  marginRight: isActive ? '24px' : 0 // Noch mehr Abstand zum Mute-Button
+                }}
               >
-                <span className="w-full text-center block" style={{marginRight: '40px', overflow:'hidden', whiteSpace:'nowrap', position:'relative'}}>
+                <span className="block text-center"
+                  style={{
+                    marginRight: '40px',
+                    overflow: 'hidden',
+                    whiteSpace: 'nowrap',
+                    position: 'relative',
+                    textOverflow: 'ellipsis',
+                    width: isActive ? '260px' : '100%',
+                    fontSize: '1em',
+                    minHeight: '1.3em',
+                    display: 'inline-block',
+                    verticalAlign: 'middle',
+                    transition: 'width 0.3s'
+                  }}
+                >
                   {isActive ? (
                     <AnimatePresence mode="wait">
                       <motion.span
@@ -626,7 +631,14 @@ export default function VoiceAssistant() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -30 }}
                         transition={{ duration: 0.7 }}
-                        style={{ display: 'inline-block', width: '100%' }}
+                        style={{
+                          display: 'inline-block',
+                          width: '100%',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          fontSize: '1em',
+                        }}
                       >
                         {conversationButtonTexts[conversationTextIndex]}
                       </motion.span>
@@ -659,7 +671,21 @@ export default function VoiceAssistant() {
                 </span>
               </motion.button>
             </div>
-            {/* Mute/Unmute Icon-Button: entfernt! */}
+            {/* Microphone mute button: only visible when active, icon only, color changes */}
+            {isActive && (
+              <div style={{display:'flex',alignItems:'center',height:'48px',marginLeft:'18px',marginRight:'12px'}}>
+                <button
+                  type="button"
+                  aria-label={micMuted ? 'Mikrofon einschalten' : 'Mikrofon ausschalten'}
+                  onClick={() => setMicMuted(muted => !muted)}
+                  className={`flex items-center justify-center px-0 py-0 rounded-full shadow font-semibold text-base border transition-colors`
+                    + (micMuted ? ' bg-orange-400 text-white border-orange-400 hover:bg-orange-500' : ' bg-[#ededed] text-[#252422] border-gray-300 hover:bg-[#df242c] hover:text-white')}
+                  style={{width:'48px',height:'48px',minWidth:'48px',minHeight:'48px'}}
+                >
+                  {micMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
+                </button>
+              </div>
+            )}
           </div>
         </div>
         {/* Datenschutz-Modal */}
@@ -700,26 +726,29 @@ export default function VoiceAssistant() {
         <div className="w-full max-w-[420px] flex flex-col items-center">
           {/* Chatbereich: Eingabe immer sichtbar, Verlauf ein-/ausklappbar */}
           <div id="chatbereich" className="w-full max-w-[420px] flex flex-col items-center">
-            {/* Eingabefeld immer sichtbar */}
-            <form className="w-full flex flex-row items-center gap-2 mb-2" onSubmit={handleFormSubmit} autoComplete="off">
-              <input
-                type="text"
-                className="flex-grow rounded-xl border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-[#df242c] bg-white"
-                placeholder={APP_CONFIG.inputPlaceholder}
-                value={inputValue}
-                onChange={handleInputChange}
-                disabled={connectionStatus !== 'connected'}
-                style={{minWidth:0}}
-              />
-              <button
-                type="submit"
-                className="rounded-xl px-3 py-2 bg-[#df242c] text-white font-semibold text-sm shadow hover:bg-[#b81c24] transition-colors disabled:opacity-50"
-                disabled={!inputValue.trim() || connectionStatus !== 'connected'}
-                aria-label="Senden"
-              >
-                <MessageCircle className="w-5 h-5" />
-              </button>
-            </form>
+            {/* Eingabefeld und Senden-Button nebeneinander, volle Breite und linksbündig, Abstand nach oben minimal, Abstand nach unten vergrößert */}
+            <div className="w-full flex flex-row items-start gap-2 mb-4 justify-start" style={{marginTop: '1px'}}>
+              <form className="w-full flex flex-row items-center gap-2" onSubmit={handleFormSubmit} autoComplete="off">
+                <input
+                  type="text"
+                  className="flex-grow rounded-xl border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-[#df242c] bg-white"
+                  placeholder={APP_CONFIG.inputPlaceholder}
+                  value={inputValue}
+                  onChange={handleInputChange}
+                  disabled={connectionStatus !== 'connected'}
+                  style={{minWidth:0, height:'48px'}}
+                />
+                <button
+                  type="submit"
+                  className="rounded-full w-12 h-12 bg-[#df242c] text-white font-semibold text-lg shadow hover:bg-[#b81c24] transition-colors disabled:opacity-50 flex items-center justify-center"
+                  disabled={!inputValue.trim() || connectionStatus !== 'connected'}
+                  aria-label="Senden"
+                  style={{marginLeft:'6px', display:'flex', alignItems:'center', justifyContent:'center', padding:0}}
+                >
+                  <ArrowUp className="w-6 h-6" style={{margin:0, padding:0, display:'block'}} />
+                </button>
+              </form>
+            </div>
             {/* Button zum Auf-/Zuklappen des Chatverlaufs mit +/− Icon rechts und Hover-Effekt für das Icon */}
             <button
               className="w-full rounded-xl px-3 py-2 bg-[#ededed] text-[#252422] font-semibold text-sm shadow hover:bg-[#df242c] hover:text-white transition-colors mb-2 flex items-center justify-between group"
@@ -743,7 +772,8 @@ export default function VoiceAssistant() {
                 ) : (
                   messages.map((msg, idx) => (
                     <div key={idx} className={`mb-2 flex ${msg.source === 'user' ? 'justify-end' : 'justify-start'}`}> 
-                      <div className={`px-3 py-2 rounded-xl max-w-[80%] whitespace-pre-line break-words shadow-sm ${msg.source === 'user' ? 'bg-[#df242c] text-white' : 'bg-gray-100 text-[#252422]'}`}
+                      <div
+                        className={`px-3 py-2 rounded-xl max-w-[80%] whitespace-pre-line break-words shadow-sm ${msg.source === 'user' ? APP_CONFIG.userBubbleClass : APP_CONFIG.agentBubbleClass}`}
                         style={{wordBreak:'break-word'}}>
                         {/* URLs automatisch erkennen und verlinken */}
                         {msg.message.split(/(https?:\/\/[^\s]+)/g).map((part, i) =>
