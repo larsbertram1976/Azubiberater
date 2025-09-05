@@ -66,14 +66,14 @@ export default function VoiceAssistant() {
   useEffect(() => {
     if (!isActive) {
       setConversationTextIndex(0)
-      return
+      return // Animation sofort stoppen, nur Starttext anzeigen
     }
     // Endlosschleife: alle 2.5s zum nächsten Text, dann wieder von vorne
     const t = setTimeout(() => {
       setConversationTextIndex(i => (i + 1) % conversationButtonTexts.length)
     }, 2500)
     return () => clearTimeout(t)
-  }, [isActive, conversationTextIndex])
+  }, [isActive, conversationTextIndex]) // Animation rotiert wieder, stoppt bei Gesprächsende
 
   useEffect(() => {
     // Only typewriter for the second text (index 1)
@@ -147,8 +147,16 @@ export default function VoiceAssistant() {
     onError: (error) => {
       alert('Agentenfehler: ' + error.message)
       setConnectionStatus('disconnected')
+      setIsActive(false)
+      setConversationTextIndex(0) // Button-Text zurücksetzen
     },
-    onStatusChange: (s) => setConnectionStatus(s),
+    onStatusChange: (s) => {
+      setConnectionStatus(s)
+      if (s === 'disconnected' || s === 'ended') {
+        setIsActive(false)
+        setConversationTextIndex(0) // Button-Text zurücksetzen
+      }
+    },
     onModeChange: (mode) => {
       if (mode === 'speaking') {
         setPendingAgentMessage(true)
@@ -203,6 +211,7 @@ export default function VoiceAssistant() {
 
   // Initialisiere Conversation
   const startConversation = useCallback(async () => {
+    setConversationTextIndex(0) // Button-Text auf Start zurücksetzen, Animation beginnt sauber
     setConnectionStatus('connecting')
     await startSession()
     setIsActive(true)
@@ -211,6 +220,7 @@ export default function VoiceAssistant() {
 
   // Beende Conversation und Recognition
   const endConversation = useCallback(async () => {
+    setConversationTextIndex(0) // Button-Text auf Initialtext zurücksetzen
     await endSession()
     setIsActive(false)
     setConnectionStatus('disconnected')
