@@ -55,6 +55,7 @@ export default function VoiceAssistant() {
   const [conversationId, setConversationId] = useState(null) // State für conversationId
   const [micMuted, setMicMuted] = useState(false) // ElevenLabs SDK mute state
   const [isChatOpen, setIsChatOpen] = useState(false)
+  const [volume, setVolume] = useState(1)
 
   // Animation für nacheinander fade-in/fade-out Text, Endlosschleife
   const conversationButtonTexts = APP_CONFIG.conversationButtonTexts
@@ -116,13 +117,14 @@ export default function VoiceAssistant() {
     status,
     isSpeaking,
     canSendFeedback,
-    setVolume,
+    setVolume: setConversationVolume,
     muteMic,
     muteTTS,
     unmuteTTS,
   } = useConversation({
     agentId: selectedAgent,
     micMuted, // Pass mute state to SDK
+    volume,
     onMessage: (message) => {
       setMessages((prev) => {
         // Streaming: Wenn Agent, hänge an letzte Agenten-Nachricht an
